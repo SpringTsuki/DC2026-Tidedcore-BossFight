@@ -1,0 +1,1 @@
+kill @e[tag=memory_shadow_dust]

@@ -1,0 +1,16 @@
+function tide_redemption:boss/lib/circle/orange/1.0
+function tide_redemption:boss/lib/circle/orange/1.5
+function tide_redemption:boss/lib/circle/orange/2.0
+function tide_redemption:boss/lib/circle/orange/2.5
+function tide_redemption:boss/lib/circle/orange/3.0
+function tide_redemption:boss/lib/circle/orange/3.5
+function tide_redemption:boss/lib/circle/orange/4.0
+function tide_redemption:boss/lib/circle/orange/4.5
+function tide_redemption:boss/lib/circle/orange/5.0
+function tide_redemption:boss/lib/circle/orange/5.5
+function tide_redemption:boss/lib/circle/orange/6.0
+function tide_redemption:boss/lib/circle/orange/6.5
+function tide_redemption:boss/lib/circle/orange/7.0
+function tide_redemption:boss/lib/circle/orange/7.5
+function tide_redemption:boss/lib/circle/orange/8.0
+# 半径8格外安全

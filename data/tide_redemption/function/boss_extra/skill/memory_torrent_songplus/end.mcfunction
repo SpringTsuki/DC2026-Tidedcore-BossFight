@@ -1,0 +1,13 @@
+bossbar remove minecraft:memory_torrent_songplus
+
+scoreboard objectives remove memory_torrent_songplus.timeline
+scoreboard objectives remove memory_torrent_song_tower_A 
+scoreboard objectives remove memory_torrent_song_tower_B
+scoreboard objectives remove memory_torrent_song_tower_C
+scoreboard objectives remove memory_torrent_song_tower_D
+scoreboard objectives remove memory_torrent_song_tower_E
+scoreboard objectives remove memory_torrent_song_tower_F
+scoreboard objectives remove memory_torrent_song_tower_G
+scoreboard objectives remove memory_torrent_song_tower_H
+
+kill @e[tag=torrent_song]

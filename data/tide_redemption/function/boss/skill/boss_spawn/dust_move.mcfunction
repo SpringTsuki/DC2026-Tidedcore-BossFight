@@ -1,0 +1,1 @@
+execute as @e[tag=tidedcore_spawn] at @s facing 0 61 0 run tp @s ^ ^ ^0.3

@@ -1,0 +1,2 @@
+bossbar remove minecraft:boss_tidedcore
+scoreboard objectives remove tidedcore_fight

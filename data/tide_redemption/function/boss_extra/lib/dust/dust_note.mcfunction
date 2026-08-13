@@ -1,0 +1,1 @@
+particle minecraft:note ~ ~ ~ 0 0 0 1.25 1 force

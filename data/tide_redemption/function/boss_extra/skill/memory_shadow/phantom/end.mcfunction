@@ -1,0 +1,2 @@
+scoreboard objectives remove memory_shadow_phantom
+bossbar remove memory_shadow_phantom

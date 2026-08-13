@@ -1,0 +1,3 @@
+scoreboard objectives remove memory_forever_delete
+bossbar remove minecraft:memory_forever_delete
+kill @e[tag=memory_forever_delete]

@@ -1,0 +1,1 @@
+scoreboard objectives remove memory_shadow_realize

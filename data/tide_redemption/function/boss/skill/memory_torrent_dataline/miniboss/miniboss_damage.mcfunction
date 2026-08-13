@@ -1,0 +1,1 @@
+execute as @e[tag=miniboss] at @s if entity @a[distance=..0.8] run effect give @a[distance=..0.8] minecraft:instant_damage 1 0

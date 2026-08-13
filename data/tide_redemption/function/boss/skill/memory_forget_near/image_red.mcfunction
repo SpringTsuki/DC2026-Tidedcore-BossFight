@@ -1,0 +1,16 @@
+function tide_redemption:boss/lib/circle/red/1.0
+function tide_redemption:boss/lib/circle/red/1.5
+function tide_redemption:boss/lib/circle/red/2.0
+function tide_redemption:boss/lib/circle/red/2.5
+function tide_redemption:boss/lib/circle/red/3.0
+function tide_redemption:boss/lib/circle/red/3.5
+function tide_redemption:boss/lib/circle/red/4.0
+function tide_redemption:boss/lib/circle/red/4.5
+function tide_redemption:boss/lib/circle/red/5.0
+function tide_redemption:boss/lib/circle/red/5.5
+function tide_redemption:boss/lib/circle/red/6.0
+function tide_redemption:boss/lib/circle/red/6.5
+function tide_redemption:boss/lib/circle/red/7.0
+function tide_redemption:boss/lib/circle/red/7.5
+function tide_redemption:boss/lib/circle/red/8.0
+# 半径8格外安全

@@ -1,0 +1,9 @@
+{
+    "replace": false,
+    "values": [
+        "tide_redemption:bgm/tick",
+        "tide_redemption:bgm/lyric/tick",
+        "tide_redemption:boss/tick",
+        "tide_redemption:boss_extra/tick"
+    ]
+}

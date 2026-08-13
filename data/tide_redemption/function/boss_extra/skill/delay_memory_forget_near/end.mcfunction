@@ -1,0 +1,2 @@
+scoreboard objectives remove delay_memory_forget_near
+bossbar remove minecraft:delay_memory_forget_near

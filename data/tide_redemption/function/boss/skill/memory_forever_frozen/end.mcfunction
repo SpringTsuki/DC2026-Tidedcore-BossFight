@@ -1,0 +1,3 @@
+scoreboard objectives remove memory_forever_frozen
+bossbar remove minecraft:memory_forever_frozen
+kill @e[tag=memory_forever_frozen]

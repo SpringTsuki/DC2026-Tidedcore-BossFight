@@ -1,0 +1,1 @@
+execute store result bossbar minecraft:memory_shadow_realize value run scoreboard players get #user memory_shadow_realize

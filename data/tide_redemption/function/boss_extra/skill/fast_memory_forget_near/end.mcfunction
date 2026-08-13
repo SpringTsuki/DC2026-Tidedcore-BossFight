@@ -1,0 +1,3 @@
+scoreboard objectives remove fast_memory_forget_near
+bossbar remove minecraft:fast_memory_forget_near
+kill @e[tag=fast_memory_forget_near.armor_stand]

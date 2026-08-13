@@ -1,0 +1,1 @@
+tp @e[tag=tidedcore] 0 63 0

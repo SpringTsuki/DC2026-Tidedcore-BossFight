@@ -1,0 +1,1 @@
+execute as @e[tag=miniboss] at @s run tp ^ ^ ^1

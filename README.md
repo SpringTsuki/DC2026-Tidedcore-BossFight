@@ -35,6 +35,14 @@
     - [14. 血量轴、锁血与狂暴](#14-血量轴锁血与狂暴)
     - [15. BGM 与歌词字幕时间轴](#15-bgm-与歌词字幕时间轴)
     - [16. 资源清理与重置](#16-资源清理与重置)
+  - [二阶段（boss_extra）：绝难度](#二阶段boss_extra绝难度)
+    - [17. 二阶段开场与「异国的诗人」NPC](#17-二阶段开场与异国的诗人npc)
+    - [18. 延迟咏唱（delay_memory_forget_far / near）](#18-延迟咏唱delay_memory_forget_far--near)
+    - [19. 快速咏唱（fast_memory_forget_far / near）](#19-快速咏唱fast_memory_forget_far--near)
+    - [20. 加强踩塔（memory_torrent_songplus）](#20-加强踩塔memory_torrent_songplus)
+    - [21. 记忆幻影（memory_shadow）——二阶段的「三运」](#21-记忆幻影memory_shadow二阶段的三运)
+    - [22. 二阶段的时间轴与难度差异](#22-二阶段的时间轴与难度差异)
+    - [23. 二阶段的收尾清理](#23-二阶段的收尾清理)
   - [已知限制与扩展建议](#已知限制与扩展建议)
   - [许可与致谢](#许可与致谢)
     - [第三方资源](#第三方资源)
@@ -91,7 +99,14 @@
 
 ## 如何开始 BOSS 战
 
-战斗由命令方块按钮触发，入口流程写在 `boss_fight.mcfunction` 中：
+游戏包含**两个难度的 BOSS 战**，触发方式不同：
+
+| 难度 | 入口 | 触发方式 |
+| --- | --- | --- |
+| 一阶段 | `boss/boss_fight.mcfunction` | 命令方块按钮 |
+| 二阶段（绝） | `boss_extra/boss_fight_start.mcfunction` | 与场地内的 **NPC「异国的诗人」对话** |
+
+一阶段入口流程：
 
 ```mcfunction
 # 增加检查函数
@@ -108,6 +123,8 @@ scoreboard players set #user bossfight_tidedcore 1
 
 ## 技能一览
 
+### 一阶段（`boss/`）
+
 | 技能（中文） | 英文 | 机制类型 | 应对方式 |
 | --- | --- | --- | --- |
 | 记忆分割 · 模块化 | Memory Cut · Module | **分摊** | 分成二组，两人一组分摊 |
@@ -120,6 +137,21 @@ scoreboard players set #user bossfight_tidedcore 1
 | 记忆洪流 · 易伤刃 | Memory Torrent · Bleeding | **挡枪** | 轮流靠近吃伤害，重复吃直接去世 |
 | 记忆洪流 · 终末曲 | Memory Torrent · EndSinger | **踩塔** | 四人各踩一座塔 |
 
+### 二阶段（`boss_extra/`，绝难度）
+
+除**复用全部一阶段技能**外，新增以下内容：
+
+| 技能（中文） | 英文 | 机制类型 | 应对方式 |
+| --- | --- | --- | --- |
+| 记忆遗忘之念 · 远/近 | Memory Forget **Delay** · Far/Near | **延迟咏唱** | 记住圈的落点，判定被推迟到数十秒后 |
+| 记忆遗忘 · 远/近（快速） | Memory Forget **Fast** · Far/Near | **快速咏唱** | 读条压缩到 80 tick，反应时间大幅缩短 |
+| 记忆洪流 · 终末歌 | Memory Torrent · **EndSong** | **8 塔踩塔** | 8 座塔缺一不可，16 种随机布局 |
+| 记忆模仿 · 记忆投影 | Memory Shadow · **Phantom** | **记忆** | 记住 4 个幻影出现的位置 |
+| 记忆模仿 · 记忆复制 | Memory Shadow · **Copy** | **记录** | 系统记录你站在哪个幻影旁 |
+| 记忆模仿 · 记忆粘贴 | Memory Shadow · **Paste** | **重现** | 圈出现在你/队友身上，按记忆站位 |
+| 记忆模仿 · 时空重现 | Memory Shadow · **Realize** | **总判定** | 幻影重演，站错即受伤 |
+| —（NPC 系统） | NPC Dialogue | **对话触发** | 与「异国的诗人」对话开战 |
+
 ---
 
 ## 战斗流程
@@ -131,7 +163,7 @@ scoreboard players set #user bossfight_tidedcore 1
 scoreboard players add #user tidedcore_fight 1
 ```
 
-主要节点：
+### 一阶段主要节点
 
 | tick | 事件 |
 | --- | --- |
@@ -156,7 +188,30 @@ scoreboard players add #user tidedcore_fight 1
 | 5570 | 未击杀则 BOSS 战结束（失败） |
 | 5580 | 停止存活检测 |
 
-`boss_extra/tick.mcfunction` 是更长的**二阶段版本**（约 7100 tick），把源 BOSS 的技能组 `function` 直接复用，并新增了 `memory_shadow`（幻影）、`memory_torrent_songplus`（加强踩塔）、`delay_/fast_memory_forget_*`（延迟 / 快速钢铁月环）等技能。
+### 二阶段主要节点
+
+`boss_extra/tick.mcfunction` 约 252 行、**7100 tick**，复用一阶段技能并插入新机制：
+
+| tick | 事件 |
+| --- | --- |
+| 50 ~ 400 | 开场台词（8 句） |
+| 224 | **生成 BOSS**（血量 +5/tick 增长） |
+| 280 ~ 460 | 开场演出：BOSS 悬浮空中，地面橙圈扩至 9 格 |
+| 460 | BOSS 落地 + 全屏 AOE 判定（9 格内致死） |
+| 580 | 钢铁 / 月环（延迟版，420t 后接第二段） |
+| 800 | 第一次地火 |
+| 1050 | 第一次分摊 / 分散 |
+| 1300 | 第一次踩塔（**8 塔加强版**） |
+| 1500 | 第二次地火 |
+| 2140 ~ 2395 | 第一次运动会（挡枪 ×4 + 快速钢铁月环 ×2） |
+| 2600 | 永恒冻结（进入 P2） |
+| 3320 | 第二次地火（第二次运动会） |
+| 3530 | 第二次踩塔 |
+| **3900 ~ 5800** | **第三次运动会：记忆幻影（三运）** |
+| 6000 | 第三次地火 |
+| 6200 / 6400 | 最后一次分摊分散 / 钢铁月环 |
+| **6600** | **狂暴 · 强制删除** |
+| 7100 | 未击杀则全灭失败 |
 
 ---
 
@@ -181,6 +236,13 @@ DC2026-Tidedcore-BossFight/
         │   │   ├── skill/      # 各技能模块
         │   │   └── lib/        # 通用库（圆形粒子 / 收尾清理 / 图像）
         │   └── boss_extra/     # 二阶段 BOSS（复用一阶段技能 + 新技能）
+        │       ├── boss_fight_start.mcfunction  # 入口
+        │       ├── tick.mcfunction              # 主时间轴（约 7100 tick）
+        │       ├── boss_random_2.mcfunction     # 随机数（同一套箱子方案）
+        │       ├── boss_tp / boss_tp_sky        # 场地内 / 空中待机
+        │       ├── npc/        # 「异国的诗人」NPC 对话触发系统
+        │       ├── skill/      # 新技能 + 一阶段技能复用
+        │       └── lib/        # 同 lib 副本（独立命名空间）
         └── loot_table/boss/boss_random.json  # 随机分支用的战利品表
 ```
 
@@ -693,21 +755,386 @@ function tide_redemption:boss/skill/memory_forever_delete/end
 
 ---
 
+## 二阶段（boss_extra）：绝难度
+
+`boss_extra/` 是同一只 BOSS 的**「绝」难度版本**，主时间轴长达约 7100 tick（一阶段为 5580）。它并非复制粘贴，而是**大量 `function` 复用了 `boss/` 下的技能模块**：
+
+```mcfunction
+# 引用源BOSS技能组Tick
+function tide_redemption:boss/skill/memory_cut_module/tick
+function tide_redemption:boss/skill/memory_cut_shard/tick
+function tide_redemption:boss/skill/memory_torrent_dataline/tick
+# function tide_redemption:boss/skill/memory_torrent_song/tick   ← 被注释，改用 songplus
+function tide_redemption:boss/skill/memory_torrent_bleeding/tick
+function tide_redemption:boss/skill/memory_forget_far/tick
+function tide_redemption:boss/skill/memory_forget_near/tick
+function tide_redemption:boss/skill/memory_forever_frozen/tick
+function tide_redemption:boss/skill/memory_forever_delete/tick
+```
+
+因此一阶段的「分摊 / 分散 / 地火 / 挡枪 / 钢铁月环 / 永恒冻结 / 狂暴」在二阶段**原样复用**，二阶段只新增下列技能与系统。
+
+> **命名空间隔离的一个细节**：`boss_extra/lib/circle/` 是 `boss/lib/circle/` 的**独立副本**，且其 `circle/*.mcfunction` 内的回调指向的是 `boss/lib/dust/*`（一阶段的粒子函数），并非 `boss_extra` 自己的。所以二阶段的圆环是「坐标表独立、粒子函数共用」。
+
+### 17. 二阶段开场与「异国的诗人」NPC
+
+二阶段不是从命令方块按钮直接开战，而是**先与 NPC 对话**。
+
+`npc/init_npc.mcfunction` 生成一个盔甲架扮演的 NPC：
+
+```mcfunction
+summon minecraft:armor_stand 924.5 102 2091 {Tags:[tided_npc,tided_npc_bossextra],ArmorItems:[{id:"minecraft:leather_boots"},{id:"minecraft:leather_leggings"},{id:"minecraft:leather_chestplate"},{id:"minecraft:player_head",components:{profile:SpringAurora}}],Invisible:true,DisabledSlots:16191,CustomName:'{"translate":"game.boss.extra.npc"}',CustomNameVisible:true}
+```
+
+- 用**皮革盔甲 + 玩家头颅**拼出一个「异国的诗人」形象，`profile:SpringAurora` 让头颅显示为指定玩家的皮肤
+- `DisabledSlots:16191` —— **禁止玩家与盔甲架交互**（防止被拿走装备）
+- `Invisible:true` 但 `CustomNameVisible:true` —— 只显示名字牌
+
+对话系统是纯数据包的**点击触发**实现（`npc/tick.mcfunction`）：
+
+```mcfunction
+# 检测玩家距离NPC的距离
+execute as @e[tag=tided_npc_bossextra] at @s as @a[distance=..3] run scoreboard players add @s tided_npc_bossextra_chat 1
+execute as @e[tag=tided_npc_bossextra] at @s as @a[distance=..3] run scoreboard players enable @s tided_npc_bossextra_trigger
+execute as @e[tag=tided_npc_bossextra] at @s as @a[distance=3..] run scoreboard players set @s tided_npc_bossextra_chat 0
+```
+
+三行分别是：**靠近 3 格内开始计时**、**启用 trigger 计分板**、**走远则重置**。
+
+对话用 `tellraw` 的 `clickEvent` 实现「点选项继续」的分支：
+
+```mcfunction
+execute as @a at @s if score @s tided_npc_bossextra_chat matches 20 run tellraw @s {"text":"","extra":[{"translate":"game.boss.extra.npc.question1"}],"clickEvent":{"action": "run_command","value": "/trigger tided_npc_bossextra_trigger set 1"}}
+```
+
+点击后把 `tided_npc_bossextra_trigger` 设为 1，下一 tick 就输出对应的下一段文本；选项被选到 `3` 时调用 `checkboss`：
+
+```mcfunction
+execute as @a at @s if score @s tided_npc_bossextra_trigger matches 3 run function tide_redemption:boss_extra/npc/checkboss
+```
+
+`checkboss` 负责**防止重复开战**——若任一 BOSS 正在进行则只提示并 `return 0`：
+
+```mcfunction
+execute if score #user bossfight_tidedcore matches 1 run tellraw @a {"translate": "game.boss.extra.npc.startcheck"}
+execute if score #user bossfight_tidedcore matches 1 run return 0
+execute if score #user bossfight_extra_tidedcore matches 1 run tellraw @a {"translate": "game.boss.extra.npc.startcheck"}
+execute if score #user bossfight_extra_tidedcore matches 1 run return 0
+function tide_redemption:boss_extra/boss_fight_start
+```
+
+> `scoreboard players enable` 是 `trigger` 计分板的必要前置——只有被 enable 的玩家才能用 `/trigger` 修改自己的分数，这是原版自带的防作弊机制。
+
+### 18. 延迟咏唱（delay_memory_forget_far / near）
+
+**机制**：预警圈出现后**不立即结算**，而是长时间保持显示，之后再统一判定。考验玩家的**记忆与站位保持**。
+
+与一阶段「钢铁 / 月环」最大的区别是:**动画被注释掉了，判定被挪走了**。
+
+`delay_memory_forget_far/tick.mcfunction` 里原本的动画与判定全部被注释：
+
+```mcfunction
+# 移除动画控制
+# execute as @e[tag=memory_forget_far.armor_stand] at @s if score #user memory_forget_far matches 20 run function .../image_orange
+...
+# 红色部分稍后判定
+# execute as @e[tag=memory_forget_far.armor_stand] at @s if score #user memory_forget_far matches 120 run function .../memory_forget_far/image_red
+# 伤害稍后判定
+# execute if score #user memory_forget_far matches 120 run function .../memory_forget_far/check
+execute if score #user delay_memory_forget_far matches 120 run function tide_redemption:boss_extra/skill/delay_memory_forget_far/end
+```
+
+也就是说它**只借用 120 tick 的读条时长来「占位」**，真正的红圈与伤害在**主时间轴的指定 tick** 上单独触发（见 `boss_extra/tick.mcfunction`）：
+
+```mcfunction
+execute as @e[tag=delay_memory_forget_far.armor_stand] at @s if score #user tidedcore_fight matches 940 run function .../delay_memory_forget_far/image_orange
+execute if score #user tidedcore_fight matches 960 run function .../delay_memory_forget_far/check
+```
+
+**关键点**：延迟技能的 `armor_stand` 会**一直留到场**（不像一阶段在 `end` 里清理），直到主时间轴在 960 tick 调用 `check` 时才判定并 `kill`：
+
+```mcfunction
+# 判定动画
+execute as @e[tag=delay_memory_forget_far.armor_stand] at @s run function .../delay_memory_forget_far/image_red
+# 半径4格内安全
+execute as @e[tag=delay_memory_forget_far.armor_stand] at @s if entity @a[distance=4.1..12] run effect give @a[distance=4.1..12] instant_damage 1 1
+# 删除标记
+kill @e[tag=delay_memory_forget_far.armor_stand]
+```
+
+判定条件与一阶段**完全一致**（远 = `distance=4.1..12` 环带），只是**发生时机被推迟**——从初始化的 940 tick 到判定 960 tick，相隔约 47 秒，玩家必须**记住圈的位置并保持站位**。
+
+### 19. 快速咏唱（fast_memory_forget_far / near）
+
+**机制**：与「延迟」相反——读条被压缩到 **80 tick**，且**动画与判定同步压缩**。
+
+`fast_memory_forget_far/tick.mcfunction`：
+
+```mcfunction
+# 动画控制
+execute as @e[tag=fast_memory_forget_far.armor_stand] at @s if score #user fast_memory_forget_far matches 20 run function .../image_orange
+execute as @e[tag=fast_memory_forget_far.armor_stand] at @s if score #user fast_memory_forget_far matches 40 run function .../image_orange
+execute as @e[tag=fast_memory_forget_far.armor_stand] at @s if score #user fast_memory_forget_far matches 60 run function .../image_orange
+execute as @e[tag=fast_memory_forget_far.armor_stand] at @s if score #user fast_memory_forget_far matches 80 run function .../image_red
+
+# 伤害判定
+execute if score #user fast_memory_forget_far matches 80 run function .../fast_memory_forget_far/check
+execute if score #user fast_memory_forget_far matches 81 run function .../fast_memory_forget_far/end
+```
+
+**唯一的区别就是读条长度**：`bossbar max 80`（一阶段为 120），橙圈刷新点从 `20/40/60/80/100` 压缩为 `20/40/60`，红圈与判定提前到 80。判定半径不变：
+
+| 技能 | 读条 | 橙圈刷新 | 红圈/判定 |
+| --- | --- | --- | --- |
+| 一阶段 钢铁/月环 | 120 | 20/40/60/80/100 | 120 |
+| `fast_` 快速版 | **80** | 20/40/60 | **80** |
+| `delay_` 延迟版 | 120（仅占位） | 主时间轴另行触发 | 主时间轴另行触发 |
+
+> 这两个技能与 `memory_shadow` 配合形成「**先读条 → 后判定**」的欺骗性机制：玩家看到圈消失了（`end` 被调用），但伤害判定其实被排到了几十秒之后。
+
+### 20. 加强踩塔（memory_torrent_songplus）
+
+**机制**：一阶段踩塔是 **4 座塔**（A~D），加强版扩到 **8 座塔**（A~H）。
+
+`init.mcfunction` 里注册了 8 个计分板：
+
+```mcfunction
+scoreboard objectives add memory_torrent_song_tower_A trigger
+...
+scoreboard objectives add memory_torrent_song_tower_H trigger
+```
+
+**塔位由 4 次独立随机决定**，每次随机在「正点组(3/4/1/2)」与「斜点组(7/8/5/6)」之间二选一：
+
+```mcfunction
+function tide_redemption:boss_extra/boss_random_2
+execute if score #user tidedcore_random matches 1 run function .../tower/spawn_tower_3
+execute if score #user tidedcore_random matches 2 run function .../tower/spawn_tower_7
+
+function tide_redemption:boss_extra/boss_random_2
+execute if score #user tidedcore_random matches 1 run function .../tower/spawn_tower_4
+execute if score #user tidedcore_random matches 2 run function .../tower/spawn_tower_8
+... (共 4 轮)
+```
+
+> 这是**复用同一套箱子随机方案的典型例子**：`boss_random_2` 与一阶段的 `boss_random` 内容一致，连续调用 4 次即得到 4 个独立 50/50 结果，组合出 2⁴ = **16 种塔位布局**。
+
+**判定逻辑与一阶段同构，只是扩展到 8 座**——每塔内有人给低伤害，任一塔为空则全场致死：
+
+```mcfunction
+execute store result score #player_number memory_torrent_song_tower_A run execute as @e[tag=torrent_song_A] at @s if entity @a[distance=..2]
+...
+# 如果其中一塔内无人则全员受到致死级伤害
+execute as @e[tag=torrent_song_A] at @s unless score #player_number memory_torrent_song_tower_A matches 1.. run effect give @a[distance=..30] minecraft:instant_damage 1 5
+```
+
+踩塔特效含**旋转与音符下落**（`tick.mcfunction`）：
+
+```mcfunction
+# 让盔甲架自行执行旋转并生成塔的粒子效果
+execute as @e[tag=torrent_song_tower] at @s run tp @s ~ ~ ~ ~10 ~
+function tide_redemption:boss/skill/memory_torrent_song/color
+
+# 音符需要每一格走0.05高度
+execute as @e[tag=torrent_song_note] at @s run tp @s ~ ~-0.05 ~
+execute as @e[tag=torrent_song_note] at @s positioned ^ ^0.0625 ^ run function tide_redemption:boss/lib/dust/dust_note
+```
+
+`tp @s ~ ~ ~ ~10 ~` 每 tick 转 10°，实现塔的旋转视觉；音符锚点每 tick 下降 0.05 格，模拟音符飘落。
+
+### 21. 记忆幻影（memory_shadow）——二阶段的「三运」
+
+这是全项目**最复杂的技能**，包含 4 个子模块，由 `memory_shadow_timeline` 统一调度：
+
+```mcfunction
+function tide_redemption:boss_extra/skill/memory_shadow/phantom/tick
+function tide_redemption:boss_extra/skill/memory_shadow/copy/tick
+function tide_redemption:boss_extra/skill/memory_shadow/paste/tick
+function tide_redemption:boss_extra/skill/memory_shadow/realize/tick
+```
+
+主时间轴（各阶段时间点）：
+
+| tick | 事件 | 子模块 |
+| --- | --- | --- |
+| 1 | 「记忆投影」开始 | `phantom` |
+| 450 | 储存钢铁/月环 | `delay_memory_forget_*` |
+| 600 | 「记忆复制」开始 | `copy` |
+| 1090 / 1110 | 延迟钢铁月环 红圈 / 判定 | — |
+| 1130 | 「记忆粘贴」判定开始 | `paste` |
+| 1600 | 「时空重现」开始 | `realize` |
+| 1950 | 三运结束 | `end` |
+
+#### 21.1 phantom（记忆投影）
+
+**玩法**：BOSS 在场地上**依次展示 4 个「幻影」的位置**，玩家需要记住它们。
+
+```mcfunction
+execute if score #user memory_shadow_phantom matches 50 run summon armor_stand 0 60 -8 {Tags:[memory_shadow_dust],Invisible:true,NoGravity:true}
+execute if score #user memory_shadow_phantom matches 50 run summon armor_stand 0 60 8 {Tags:[memory_shadow_dust],Invisible:true,NoGravity:true}
+execute if score #user memory_shadow_phantom matches 110 run kill @e[tag=memory_shadow_dust]
+execute if score #user memory_shadow_phantom matches 110 run summon armor_stand 0 60 -8 {Tags:[memory_shadow_a,memory_shadow_armor],Invisible:false,NoGravity:true,Invulnerable:true,ArmorItems:[...player_head,components:{profile:SpringAurora}}],Rotation:[0f]}
+execute if score #user memory_shadow_phantom matches 110 run summon armor_stand 0 60 8 {Tags:[memory_shadow_b,memory_shadow_armor],Invisible:false,...,components:{profile:CastorVow}}],Rotation:[180f]}
+```
+
+节奏是：**50 tick 生成青色粒子标记 → 110 tick 标记变成实体幻影**，之后 150/210 tick 在另一轴重复，共 4 个幻影（`memory_shadow_a` ~ `d`），分别使用 4 位玩家的头颅皮肤（`SpringAurora` / `CastorVow` / `Starry_Mika` / `Yuan_Ye`）。
+
+幻影本体是**可见的盔甲架**（`Invisible:false` + `Invulnerable:true`），用 `Rotation` 控制朝向。
+
+**300 tick 时把 4 个角色标签分配给玩家**，且**层层排除已分配者**：
+
+```mcfunction
+execute unless entity @a[tag=memory_shadow_a] if score #user memory_shadow_phantom matches 300 run tag @r[x=-11,y=60,z=-11,dx=22,dy=7,dz=22] add memory_shadow_a
+execute unless entity @a[tag=memory_shadow_b] if score #user memory_shadow_phantom matches 300 run tag @r[tag=!memory_shadow_a,x=-11,y=60,z=-11,dx=22,dy=7,dz=22] add memory_shadow_b
+```
+
+> 注意 `unless entity @a[tag=memory_shadow_a]` 这个前置判断——**只有当该角色还没被分配时**才随机选人。这样允许多个玩家共同完成（而非强制 4 人），同时保证不重复。被注释掉的 `name=SpringAurora` 版本说明作者曾考虑**固定玩家对应固定幻影**。
+
+#### 21.2 copy（记忆复制）
+
+**玩法**：记录玩家在 4 个时间窗内**站在哪个幻影旁**。
+
+`copy/tick.mcfunction` 在 50/100/150/200/250 tick 用 `boss_random_2` 决定每个幻影**出现「分散(cut)」还是「分摊(module)」**，310~450 tick 播放动画。
+
+**460 tick 调用 `check`，把幻影与玩家配对**：
+
+```mcfunction
+execute as @e[tag=memory_shadow_cut_1,tag=memory_shadow_time_1] at @s run tag @a[sort=nearest,limit=1] add memory_shadow_time_1
+execute as @e[tag=memory_shadow_cut_1,tag=memory_shadow_time_1] at @s run tag @a[sort=nearest,limit=1] add memory_shadow_cut_1
+```
+
+拆解：`@e[tag=memory_shadow_cut_1,tag=memory_shadow_time_1]` 是**同时带两个标签**的幻影（即「第 1 时段且被判定为分散」的那个），然后给**距它最近的一名玩家**（`@a[sort=nearest,limit=1]`）打上对应标签。
+
+共 8 组配对（4 时段 × cut/module），把「谁该站在哪」记录成玩家标签。
+
+#### 21.3 paste（记忆粘贴）
+
+**玩法**：幻影消失后，**在玩家身上重现**之前记录的分摊/分散圈，要求玩家按记忆站位。
+
+`paste/tick.mcfunction` 按 100 tick 一个周期分 4 回（tick 100/200/300/400 判定），每次同时处理两种标记：
+
+```mcfunction
+# 分散组：圈在自己身上
+execute as @a[tag=memory_shadow_time_1,tag=memory_shadow_cut_1] at @s positioned ~ ~0.0625 ~ if score #user memory_shadow_paste matches 100 if entity @a[distance=..15] run effect give @a[distance=..15] instant_damage 1 1
+# 分摊组：圈在队友身上
+execute as @a[tag=memory_shadow_time_1,tag=memory_shadow_module_1] at @s if score #user memory_shadow_paste matches 100 run function .../paste/check_module
+```
+
+`check_module` 复用一阶段分摊的判定骨架：
+
+```mcfunction
+execute store result score #player_number memory_shadow_module run execute if entity @a[distance=..2]
+execute if score #player_number memory_shadow_module matches 2.. run effect give @a[distance=..3] minecraft:instant_damage 1 0
+execute unless score #player_number memory_shadow_module matches 2.. run effect give @a[distance=..3] minecraft:instant_damage 1 5
+scoreboard objectives remove memory_shadow_module
+```
+
+> 这里有个**性能优化细节**：`memory_shadow_module` 计分板是**临时创建、用完立即 `remove`** 的，而 `memory_cut_module_A/B` 是在 `init` 里建、`end` 里删的。因为 `paste` 在 400 tick 内要执行 4 次判定，每次都重建同名计分板，避免多次 `add` 报错。
+
+另外，分散组用的是 **`distance=..15`** 这个很大的半径——因为圈挂在**玩家自己身上**，判定的是「有没有别人靠近你」。
+
+#### 21.4 realize（时空重现）
+
+**玩法**：最终判定。把之前所有记录**一次性重演**，玩家必须站在正确位置。
+
+`realize/tick.mcfunction` 在 1 和 60 tick 生成 4 个幻影锚点（坐标 `937 147 2023` 等），然后**把 copy 阶段记录的玩家标签转移给幻影**：
+
+```mcfunction
+execute as @e[tag=memory_shadow_a,tag=memory_shadow_armor] at @s if entity @a[tag=memory_shadow_a,tag=memory_shadow_cut_1] if score #user memory_shadow_realize matches 5 run tag @s add memory_shadow_cut
+execute as @e[tag=memory_shadow_a,tag=memory_shadow_armor] at @s if entity @a[tag=memory_shadow_a,tag=memory_shadow_module_1] if score #user memory_shadow_realize matches 5 run tag @s add memory_shadow_module
+```
+
+逻辑是：**如果「被分到 a 号幻影的玩家」身上有 `cut_1` 标签，那么 a 号幻影就继承 `memory_shadow_cut` 标签**。这样幻影就"知道"自己该演分散还是分摊。
+
+随后按 100 tick 分两批判定（a/b 在 200 tick，c/d 在 300 tick）：
+
+```mcfunction
+execute as @e[tag=memory_shadow_a,tag=memory_shadow_armor,tag=memory_shadow_cut] at @s if entity @a[distance=..15] if score #user memory_shadow_realize matches 200 run effect give @a[distance=..15] minecraft:instant_damage 1 2
+```
+
+`200 tick` 时 `check_module` 做分摊判定，`300 tick` 时调用 `end` 收尾。
+
+**realize 的 BOSS Bar 是动态的**——`max` 设为 120，但用独立函数每 tick 同步，并在 121 tick 主动移除：
+
+```mcfunction
+execute if score #user memory_shadow_realize matches 1..120 run function .../realize/bossbar
+execute if score #user memory_shadow_realize matches 121 run bossbar remove memory_shadow_realize
+```
+
+> 注意 `realize` 的 BOSS Bar `max` 只有 120，但该模块实际运行到 300 tick——**进度条会先走满再消失**，作为「时限提示」。
+
+### 22. 二阶段的时间轴与难度差异
+
+`boss_extra/tick.mcfunction` 约 252 行、7100 tick。与一阶段的主要差异：
+
+| 项目 | 一阶段 `boss/` | 二阶段 `boss_extra/` |
+| --- | --- | --- |
+| 总时长 | 5580 tick | **7100 tick** |
+| BOSS 生成 | tick 359 | tick **224** |
+| 开场血量增长 | `+3`/tick，1~359 | `+5`/tick，1~224 |
+| 存活检测区域 | `dx=22,dz=22` | **`dx=25,dz=25`**（场地略大） |
+| BOSS 待机位置 | 地面 `0 60 0` | 前期**空中 `0 73 0`** + `glowing` |
+| 踩塔 | 4 塔 | **8 塔**（songplus） |
+| 钢铁/月环 | 120 tick | 120 + **80(fast)** + 延迟版 |
+| 大地图机制 | 无 | **`memory_shadow` 三运** |
+| 触发方式 | 命令方块按钮 | **NPC 对话** |
+
+BOSS 前期被 `tp` 到空中并附上发光效果：
+
+```mcfunction
+execute if score #user tidedcore_fight matches 224..459 run tp @e[tag=tidedcore] 0 73 0
+execute if score #user tidedcore_fight matches 460 run tp @e[tag=tidedcore] 0 60 0
+execute if score #user tidedcore_fight matches 224..460 run effect give @e[tag=tidedcore] glowing 1
+```
+
+**这是为了配合开场演出**：BOSS 悬浮在空中（tick 224~459），同时地面用橙色圈逐级扩大到 9 格（`lib/circle/orange/4.5` → `9.0`），到 460 tick 落地并结算一次全屏 AOE：
+
+```mcfunction
+#伤害判定、九格外安全
+execute as @e[tag=memory_forget_near.armor_stand] at @s if entity @a[distance=..9] if score #user tidedcore_fight matches 460 run effect give @a[distance=..9] instant_damage 1 5
+execute if score #user tidedcore_fight matches 460 run kill @e[tag=memory_forget_near.armor_stand]
+```
+
+### 23. 二阶段的收尾清理
+
+`boss_fight_end.mcfunction` 除了清理主计分板，还必须**逐个调用新增技能的 `end`**——因为一阶段的 `boss_fight_end` 不认识它们：
+
+```mcfunction
+function tide_redemption:boss_extra/skill/delay_memory_forget_far/end
+function tide_redemption:boss_extra/skill/delay_memory_forget_near/end
+function tide_redemption:boss_extra/skill/fast_memory_forget_far/end
+function tide_redemption:boss_extra/skill/fast_memory_forget_near/end
+function tide_redemption:boss_extra/skill/memory_torrent_songplus/end
+function tide_redemption:boss_extra/skill/memory_shadow/end
+
+# 延迟咏唱假人移除
+kill @e[tag=delay_memory_forget_near.armor_stand]
+kill @e[tag=delay_memory_forget_far.armor_stand]
+```
+
+最后两行是**必要的兜底**：延迟技能的盔甲架是长期驻留的，若战斗在判定前提前结束（例如玩家全灭），`check` 永远不会被调用，锚点就会残留——所以必须在收尾时强制 `kill`。
+
+> 这体现了一个通用原则：**凡是「生命周期跨越多个阶段」的实体，都不能只依赖自己模块的 `end` 清理，必须在主流程的收尾函数里兜底。**
+
+---
+
 ## 已知限制与扩展建议
 
 **当前限制**
 
-- 判定区域硬编码在 `x=-11,y=60,z=-11,dx=22,dy=7,dz=22`，换场地需全局替换
+- 判定区域硬编码在 `x=-11,y=60,z=-11`，一阶段用 `dx=22,dz=22`、二阶段用 `dx=25,dz=25`，换场地需分别替换
 - 技能读条长度、血量轴全部为写死的 tick 数值，调整节奏需逐个修改
-- 依赖 4 人以上配合，人数不足时部分机制无法完成
-- `lib/circle/` 粒子库体积较大（合计约 2 MB 源代码），首次加载有轻微开销
+- 依赖 4 人以上配合，人数不足时部分机制无法完成（`memory_shadow` 已用 `unless entity` 做了降级适配）
+- `lib/circle/` 粒子库体积较大（**一阶段与二阶段各存一份副本，合计约 4 MB 源代码**），首次加载有轻微开销
+- 二阶段大量复用一阶段技能模块，两者修改时需注意**同步**（例如伤害等级、判定半径）
 
 **扩展方向**
 
 1. **抽出配置层**：把判定区域、读条长度、伤害等级集中为一组计分板常量，减少硬编码
-2. **增加更多技能**：按 `init/tick/check/end` 四段式新写目录，并在 `boss/tick.mcfunction` 注册即可——架构本身已为扩展做好准备
-3. **多难度模式**：用计分板切换「普通 / 零式」，对应不同的读条长度与伤害等级
-4. **多人角色分工**：当前已用 `@r` 与标签分配角色，可扩展到 FF14 式的 T/N/DPS 分工
+2. **取消 `lib` 重复副本**：二阶段的 `boss_extra/lib/circle/` 与一阶段内容一致，可直接复用 `boss/lib/circle/`，省下一半体积
+3. **增加更多技能**：按 `init/tick/check/end` 四段式新写目录，并在对应 `tick.mcfunction` 注册即可——架构本身已为扩展做好准备
+4. **多难度模式**：用计分板切换「普通 / 零式 / 绝」，对应不同的读条长度与伤害等级
+5. **多人角色分工**：当前已用 `@r` 与标签分配角色，可扩展到 FF14 式的 T/N/DPS 分工
 
 ---
 

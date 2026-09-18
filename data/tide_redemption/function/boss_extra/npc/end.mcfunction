@@ -1,2 +1,0 @@
-scoreboard objectives remove tided_npc_bossextra_chat
-scoreboard objectives remove tided_npc_bossextra_trigger

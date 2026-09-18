@@ -1,6 +1,3 @@
-# NPC 对话触发
-function tide_redemption:boss_extra/npc/tick
-
 # 若BOSS正在执行此函数，则不执行此判断函数
 execute if score #user bossfight_tidedcore matches 1 run return 0
 

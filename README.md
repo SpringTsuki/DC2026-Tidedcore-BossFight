@@ -35,18 +35,20 @@
     - [14. 血量轴、锁血与狂暴](#14-血量轴锁血与狂暴)
     - [15. BGM 与歌词字幕时间轴](#15-bgm-与歌词字幕时间轴)
     - [16. 资源清理与重置](#16-资源清理与重置)
-  - [二阶段（boss_extra）：绝难度](#二阶段boss_extra绝难度)
-    - [17. 二阶段开场与「异国的诗人」NPC](#17-二阶段开场与异国的诗人npc)
-    - [18. 延迟咏唱（delay_memory_forget_far / near）](#18-延迟咏唱delay_memory_forget_far--near)
-    - [19. 快速咏唱（fast_memory_forget_far / near）](#19-快速咏唱fast_memory_forget_far--near)
-    - [20. 加强踩塔（memory_torrent_songplus）](#20-加强踩塔memory_torrent_songplus)
-    - [21. 记忆幻影（memory_shadow）——二阶段的「三运」](#21-记忆幻影memory_shadow二阶段的三运)
-    - [22. 二阶段的时间轴与难度差异](#22-二阶段的时间轴与难度差异)
-    - [23. 二阶段的收尾清理](#23-二阶段的收尾清理)
+  - [二阶段（boss_extra）：零式难度](#二阶段boss_extra零式难度)
+    - [17. 延迟咏唱（delay_memory_forget_far / near）](#17-延迟咏唱delay_memory_forget_far--near)
+    - [18. 快速咏唱（fast_memory_forget_far / near）](#18-快速咏唱fast_memory_forget_far--near)
+    - [19. 加强踩塔（memory_torrent_songplus）](#19-加强踩塔memory_torrent_songplus)
+    - [20. 记忆幻影（memory_shadow）——二阶段的「三运」](#20-记忆幻影memory_shadow二阶段的三运)
+    - [21. 二阶段的时间轴与难度差异](#21-二阶段的时间轴与难度差异)
+    - [22. 二阶段的收尾清理](#22-二阶段的收尾清理)
   - [已知限制与扩展建议](#已知限制与扩展建议)
   - [许可与致谢](#许可与致谢)
     - [第三方资源](#第三方资源)
     - [其他](#其他)
+    - [特别感谢](#特别感谢)
+  - [更新记录](#更新记录)
+  - [关于本项目](#关于本项目)
 
 ---
 
@@ -95,7 +97,9 @@
    /datapack list
    ```
 
-> **提示**：仓库内的 `data/tide_redemption/function.zip` 是函数目录的压缩备份，部署时**不需要**解压，游戏会直接读取 `function/` 目录。
+> **提示**：本仓库包含数据包，地图与资源包。原生地图已经包含了一份数据包。若需自研，直接 git clone 本项目即可。
+>
+> 所有 `tellraw` / `title` / `CustomName` 的文本都使用 `{"translate":"..."}` 键，**实际文案在资源包的语言文件中**——因此更换语言文件即可实现多语言，修改文案也无需改动逻辑代码。
 
 ## 如何开始 BOSS 战
 
@@ -103,8 +107,8 @@
 
 | 难度 | 入口 | 触发方式 |
 | --- | --- | --- |
-| 一阶段 | `boss/boss_fight.mcfunction` | 命令方块按钮 |
-| 二阶段（绝） | `boss_extra/boss_fight_start.mcfunction` | 与场地内的 **NPC「异国的诗人」对话** |
+| 一阶段 | `boss/boss_fight.mcfunction` | 使用命令方块按钮进行切换 |
+| 二阶段（零式） | `boss_extra/boss_fight_start.mcfunction` | 使用命令方块按钮进行切换 |
 
 一阶段入口流程：
 
@@ -137,7 +141,7 @@ scoreboard players set #user bossfight_tidedcore 1
 | 记忆洪流 · 易伤刃 | Memory Torrent · Bleeding | **挡枪** | 轮流靠近吃伤害，重复吃直接去世 |
 | 记忆洪流 · 终末曲 | Memory Torrent · EndSinger | **踩塔** | 四人各踩一座塔 |
 
-### 二阶段（`boss_extra/`，绝难度）
+### 二阶段（`boss_extra/`，零式难度）
 
 除**复用全部一阶段技能**外，新增以下内容：
 
@@ -150,7 +154,6 @@ scoreboard players set #user bossfight_tidedcore 1
 | 记忆模仿 · 记忆复制 | Memory Shadow · **Copy** | **记录** | 系统记录你站在哪个幻影旁 |
 | 记忆模仿 · 记忆粘贴 | Memory Shadow · **Paste** | **重现** | 圈出现在你/队友身上，按记忆站位 |
 | 记忆模仿 · 时空重现 | Memory Shadow · **Realize** | **总判定** | 幻影重演，站错即受伤 |
-| —（NPC 系统） | NPC Dialogue | **对话触发** | 与「异国的诗人」对话开战 |
 
 ---
 
@@ -239,8 +242,7 @@ DC2026-Tidedcore-BossFight/
         │       ├── boss_fight_start.mcfunction  # 入口
         │       ├── tick.mcfunction              # 主时间轴（约 7100 tick）
         │       ├── boss_random_2.mcfunction     # 随机数（同一套箱子方案）
-        │       ├── boss_tp / boss_tp_sky        # 场地内 / 空中待机
-        │       ├── npc/        # 「异国的诗人」NPC 对话触发系统
+        │       ├── boss_tp / boss_tp_sky        # 场地内 / 空中待机      
         │       ├── skill/      # 新技能 + 一阶段技能复用
         │       └── lib/        # 同 lib 副本（独立命名空间）
         └── loot_table/boss/boss_random.json  # 随机分支用的战利品表
@@ -755,9 +757,9 @@ function tide_redemption:boss/skill/memory_forever_delete/end
 
 ---
 
-## 二阶段（boss_extra）：绝难度
+## 二阶段（boss_extra）：零式难度
 
-`boss_extra/` 是同一只 BOSS 的**「绝」难度版本**，主时间轴长达约 7100 tick（一阶段为 5580）。它并非复制粘贴，而是**大量 `function` 复用了 `boss/` 下的技能模块**：
+`boss_extra/` 是同一只 BOSS 的 **「零式」难度版本**，主时间轴长达约 7100 tick（一阶段为 5580）。它并非复制粘贴，而是**大量 `function` 复用了 `boss/` 下的技能模块**：
 
 ```mcfunction
 # 引用源BOSS技能组Tick
@@ -776,56 +778,7 @@ function tide_redemption:boss/skill/memory_forever_delete/tick
 
 > **命名空间隔离的一个细节**：`boss_extra/lib/circle/` 是 `boss/lib/circle/` 的**独立副本**，且其 `circle/*.mcfunction` 内的回调指向的是 `boss/lib/dust/*`（一阶段的粒子函数），并非 `boss_extra` 自己的。所以二阶段的圆环是「坐标表独立、粒子函数共用」。
 
-### 17. 二阶段开场与「异国的诗人」NPC
-
-二阶段不是从命令方块按钮直接开战，而是**先与 NPC 对话**。
-
-`npc/init_npc.mcfunction` 生成一个盔甲架扮演的 NPC：
-
-```mcfunction
-summon minecraft:armor_stand 924.5 102 2091 {Tags:[tided_npc,tided_npc_bossextra],ArmorItems:[{id:"minecraft:leather_boots"},{id:"minecraft:leather_leggings"},{id:"minecraft:leather_chestplate"},{id:"minecraft:player_head",components:{profile:SpringAurora}}],Invisible:true,DisabledSlots:16191,CustomName:'{"translate":"game.boss.extra.npc"}',CustomNameVisible:true}
-```
-
-- 用**皮革盔甲 + 玩家头颅**拼出一个「异国的诗人」形象，`profile:SpringAurora` 让头颅显示为指定玩家的皮肤
-- `DisabledSlots:16191` —— **禁止玩家与盔甲架交互**（防止被拿走装备）
-- `Invisible:true` 但 `CustomNameVisible:true` —— 只显示名字牌
-
-对话系统是纯数据包的**点击触发**实现（`npc/tick.mcfunction`）：
-
-```mcfunction
-# 检测玩家距离NPC的距离
-execute as @e[tag=tided_npc_bossextra] at @s as @a[distance=..3] run scoreboard players add @s tided_npc_bossextra_chat 1
-execute as @e[tag=tided_npc_bossextra] at @s as @a[distance=..3] run scoreboard players enable @s tided_npc_bossextra_trigger
-execute as @e[tag=tided_npc_bossextra] at @s as @a[distance=3..] run scoreboard players set @s tided_npc_bossextra_chat 0
-```
-
-三行分别是：**靠近 3 格内开始计时**、**启用 trigger 计分板**、**走远则重置**。
-
-对话用 `tellraw` 的 `clickEvent` 实现「点选项继续」的分支：
-
-```mcfunction
-execute as @a at @s if score @s tided_npc_bossextra_chat matches 20 run tellraw @s {"text":"","extra":[{"translate":"game.boss.extra.npc.question1"}],"clickEvent":{"action": "run_command","value": "/trigger tided_npc_bossextra_trigger set 1"}}
-```
-
-点击后把 `tided_npc_bossextra_trigger` 设为 1，下一 tick 就输出对应的下一段文本；选项被选到 `3` 时调用 `checkboss`：
-
-```mcfunction
-execute as @a at @s if score @s tided_npc_bossextra_trigger matches 3 run function tide_redemption:boss_extra/npc/checkboss
-```
-
-`checkboss` 负责**防止重复开战**——若任一 BOSS 正在进行则只提示并 `return 0`：
-
-```mcfunction
-execute if score #user bossfight_tidedcore matches 1 run tellraw @a {"translate": "game.boss.extra.npc.startcheck"}
-execute if score #user bossfight_tidedcore matches 1 run return 0
-execute if score #user bossfight_extra_tidedcore matches 1 run tellraw @a {"translate": "game.boss.extra.npc.startcheck"}
-execute if score #user bossfight_extra_tidedcore matches 1 run return 0
-function tide_redemption:boss_extra/boss_fight_start
-```
-
-> `scoreboard players enable` 是 `trigger` 计分板的必要前置——只有被 enable 的玩家才能用 `/trigger` 修改自己的分数，这是原版自带的防作弊机制。
-
-### 18. 延迟咏唱（delay_memory_forget_far / near）
+### 17. 延迟咏唱（delay_memory_forget_far / near）
 
 **机制**：预警圈出现后**不立即结算**，而是长时间保持显示，之后再统一判定。考验玩家的**记忆与站位保持**。
 
@@ -864,7 +817,7 @@ kill @e[tag=delay_memory_forget_far.armor_stand]
 
 判定条件与一阶段**完全一致**（远 = `distance=4.1..12` 环带），只是**发生时机被推迟**——从初始化的 940 tick 到判定 960 tick，相隔约 47 秒，玩家必须**记住圈的位置并保持站位**。
 
-### 19. 快速咏唱（fast_memory_forget_far / near）
+### 18. 快速咏唱（fast_memory_forget_far / near）
 
 **机制**：与「延迟」相反——读条被压缩到 **80 tick**，且**动画与判定同步压缩**。
 
@@ -892,9 +845,9 @@ execute if score #user fast_memory_forget_far matches 81 run function .../fast_m
 
 > 这两个技能与 `memory_shadow` 配合形成「**先读条 → 后判定**」的欺骗性机制：玩家看到圈消失了（`end` 被调用），但伤害判定其实被排到了几十秒之后。
 
-### 20. 加强踩塔（memory_torrent_songplus）
+### 19. 加强踩塔（memory_torrent_songplus）
 
-**机制**：一阶段踩塔是 **4 座塔**（A~D），加强版扩到 **8 座塔**（A~H）。
+**机制**：一阶段踩塔是正点或斜点的两组 **4 座塔**（A~D），加强版为场地内 **8 座塔无规律随机出现 4座（A~H）** 。
 
 `init.mcfunction` 里注册了 8 个计分板：
 
@@ -919,7 +872,7 @@ execute if score #user tidedcore_random matches 2 run function .../tower/spawn_t
 
 > 这是**复用同一套箱子随机方案的典型例子**：`boss_random_2` 与一阶段的 `boss_random` 内容一致，连续调用 4 次即得到 4 个独立 50/50 结果，组合出 2⁴ = **16 种塔位布局**。
 
-**判定逻辑与一阶段同构，只是扩展到 8 座**——每塔内有人给低伤害，任一塔为空则全场致死：
+**判定逻辑与一阶段同构，只是扩展到 8 座**——每塔内有人则给予踩塔玩家较低的伤害，任一塔为空则全场致死：
 
 ```mcfunction
 execute store result score #player_number memory_torrent_song_tower_A run execute as @e[tag=torrent_song_A] at @s if entity @a[distance=..2]
@@ -942,7 +895,7 @@ execute as @e[tag=torrent_song_note] at @s positioned ^ ^0.0625 ^ run function t
 
 `tp @s ~ ~ ~ ~10 ~` 每 tick 转 10°，实现塔的旋转视觉；音符锚点每 tick 下降 0.05 格，模拟音符飘落。
 
-### 21. 记忆幻影（memory_shadow）——二阶段的「三运」
+### 20. 记忆幻影（memory_shadow）——二阶段的「三运」
 
 这是全项目**最复杂的技能**，包含 4 个子模块，由 `memory_shadow_timeline` 统一调度：
 
@@ -958,6 +911,8 @@ function tide_redemption:boss_extra/skill/memory_shadow/realize/tick
 | tick | 事件 | 子模块 |
 | --- | --- | --- |
 | 1 | 「记忆投影」开始 | `phantom` |
+| 110 / 210 | 4 个幻影依次实体化（头颅皮肤留空） | `phantom` |
+| 300 | 分配 4 个角色标签 **+ 回填玩家皮肤** | `phantom` |
 | 450 | 储存钢铁/月环 | `delay_memory_forget_*` |
 | 600 | 「记忆复制」开始 | `copy` |
 | 1090 / 1110 | 延迟钢铁月环 红圈 / 判定 | — |
@@ -965,19 +920,18 @@ function tide_redemption:boss_extra/skill/memory_shadow/realize/tick
 | 1600 | 「时空重现」开始 | `realize` |
 | 1950 | 三运结束 | `end` |
 
-#### 21.1 phantom（记忆投影）
+#### 20.1 phantom（记忆投影）
 
-**玩法**：BOSS 在场地上**依次展示 4 个「幻影」的位置**，玩家需要记住它们。
+**玩法**：BOSS 在场地上**依次展示 4 个「幻影」的位置**，玩家需要记住它们。幻影会**顶着对应玩家的头颅皮肤**出现，让玩家一眼认出「这是我」。
 
 ```mcfunction
 execute if score #user memory_shadow_phantom matches 50 run summon armor_stand 0 60 -8 {Tags:[memory_shadow_dust],Invisible:true,NoGravity:true}
 execute if score #user memory_shadow_phantom matches 50 run summon armor_stand 0 60 8 {Tags:[memory_shadow_dust],Invisible:true,NoGravity:true}
 execute if score #user memory_shadow_phantom matches 110 run kill @e[tag=memory_shadow_dust]
-execute if score #user memory_shadow_phantom matches 110 run summon armor_stand 0 60 -8 {Tags:[memory_shadow_a,memory_shadow_armor],Invisible:false,NoGravity:true,Invulnerable:true,ArmorItems:[...player_head,components:{profile:SpringAurora}}],Rotation:[0f]}
-execute if score #user memory_shadow_phantom matches 110 run summon armor_stand 0 60 8 {Tags:[memory_shadow_b,memory_shadow_armor],Invisible:false,...,components:{profile:CastorVow}}],Rotation:[180f]}
+execute if score #user memory_shadow_phantom matches 110 run summon armor_stand 0 60 -8 {Tags:[memory_shadow_a,memory_shadow_armor],Invisible:false,NoGravity:true,Invulnerable:true,ArmorItems:[...player_head,components:{"minecraft:profile":{}}]],Rotation:[0f]}
 ```
 
-节奏是：**50 tick 生成青色粒子标记 → 110 tick 标记变成实体幻影**，之后 150/210 tick 在另一轴重复，共 4 个幻影（`memory_shadow_a` ~ `d`），分别使用 4 位玩家的头颅皮肤（`SpringAurora` / `CastorVow` / `Starry_Mika` / `Yuan_Ye`）。
+节奏是：**50 tick 生成青色粒子标记 → 110 tick 标记变成实体幻影**，之后 150/210 tick 在另一轴重复，共 4 个幻影（`memory_shadow_a` ~ `d`）。
 
 幻影本体是**可见的盔甲架**（`Invisible:false` + `Invulnerable:true`），用 `Rotation` 控制朝向。
 
@@ -990,7 +944,48 @@ execute unless entity @a[tag=memory_shadow_b] if score #user memory_shadow_phant
 
 > 注意 `unless entity @a[tag=memory_shadow_a]` 这个前置判断——**只有当该角色还没被分配时**才随机选人。这样允许多个玩家共同完成（而非强制 4 人），同时保证不重复。被注释掉的 `name=SpringAurora` 版本说明作者曾考虑**固定玩家对应固定幻影**。
 
-#### 21.2 copy（记忆复制）
+##### 动态皮肤：让幻影顶着「被选中玩家」的头
+
+**这是三运最有意思的一处实现。** 幻影出现时，玩家还没被分配角色——**要等 300 tick 才知道谁是 a、谁是 b**。但幻影在 110/210 tick 就已经召唤出来了，那时根本不知道要显示谁的头。
+
+解法是**两段式**：
+
+1. **召唤时留空**——头颅组件的 profile 是一个空对象，不指定任何皮肤：
+
+```mcfunction
+components:{"minecraft:profile":{}}
+```
+
+2. **分配完成的瞬间再回填**——在 300 tick 选完人之后，用 `data modify` 把玩家的 UUID 写进头颅的 `profile.id`：
+
+```mcfunction
+# 复制被选中玩家的皮肤到分身头像
+execute if score #user memory_shadow_phantom matches 300 as @a[tag=memory_shadow_a,limit=1] run data modify entity @e[tag=memory_shadow_a,tag=memory_shadow_armor,limit=1] ArmorItems[3].components.minecraft:profile.id set from entity @s UUID
+execute if score #user memory_shadow_phantom matches 300 as @a[tag=memory_shadow_b,limit=1] run data modify entity @e[tag=memory_shadow_b,tag=memory_shadow_armor,limit=1] ArmorItems[3].components.minecraft:profile.id set from entity @s UUID
+execute if score #user memory_shadow_phantom matches 300 as @a[tag=memory_shadow_c,limit=1] run data modify entity @e[tag=memory_shadow_c,tag=memory_shadow_armor,limit=1] ArmorItems[3].components.minecraft:profile.id set from entity @s UUID
+execute if score #user memory_shadow_phantom matches 300 as @a[tag=memory_shadow_d,limit=1] run data modify entity @e[tag=memory_shadow_d,tag=memory_shadow_armor,limit=1] ArmorItems[3].components.minecraft:profile.id set from entity @s UUID
+```
+
+**逐段拆解这一行**：
+
+| 片段 | 作用 |
+| --- | --- |
+| `as @a[tag=memory_shadow_a,limit=1]` | 切换执行者到「被分到 a 号的玩家」——`@s` 现在指玩家 |
+| `data modify entity @e[...]` | 目标：a 号幻影的盔甲架 |
+| `ArmorItems[3].components.minecraft:profile.id` | 头盔（`ArmorItems` 数组第 4 项）的皮肤 UUID 字段 |
+| `set from entity @s UUID` | 来源：玩家的 UUID |
+
+**为什么用 UUID 而不是玩家名？** 因为 `profile.id` 字段接受的是 UUID；而 `@s UUID` 可以直接从实体读取，**不需要知道玩家叫什么**。
+
+**这个设计的好处**：
+
+- **不再硬编码 4 位固定玩家的名字**——谁被选中，幻影就显示谁
+- **支持任意人数**（≥1 人都能玩），跟 `unless entity` 的角色分配逻辑完全自洽
+- **人数不足时也不会出现「空头像」**——因为皮肤总是来自真实被选中的玩家
+
+> 💡 **可迁移的技巧**：`data modify ... set from entity @s UUID` 是**动态生成玩家头颅**的通用写法。任何需要「显示某个玩家皮肤」的场景（NPC 雕像、击杀播报、队伍标识、幻影分身）都可以用这一招，而不必预先在 NBT 里写死 `profile:<玩家名>`。
+
+#### 20.2 copy（记忆复制）
 
 **玩法**：记录玩家在 4 个时间窗内**站在哪个幻影旁**。
 
@@ -1007,7 +1002,7 @@ execute as @e[tag=memory_shadow_cut_1,tag=memory_shadow_time_1] at @s run tag @a
 
 共 8 组配对（4 时段 × cut/module），把「谁该站在哪」记录成玩家标签。
 
-#### 21.3 paste（记忆粘贴）
+#### 20.3 paste（记忆粘贴）
 
 **玩法**：幻影消失后，**在玩家身上重现**之前记录的分摊/分散圈，要求玩家按记忆站位。
 
@@ -1033,9 +1028,9 @@ scoreboard objectives remove memory_shadow_module
 
 另外，分散组用的是 **`distance=..15`** 这个很大的半径——因为圈挂在**玩家自己身上**，判定的是「有没有别人靠近你」。
 
-#### 21.4 realize（时空重现）
+#### 20.4 realize（时空重现）
 
-**玩法**：最终判定。把之前所有记录**一次性重演**，玩家必须站在正确位置。
+**玩法**：最终判定。把之前所有玩家受到的伤害模式（大圈或分摊）记录，并在幻影身上进行**一次性重演**，玩家必须站在正确位置。
 
 `realize/tick.mcfunction` 在 1 和 60 tick 生成 4 个幻影锚点（坐标 `937 147 2023` 等），然后**把 copy 阶段记录的玩家标签转移给幻影**：
 
@@ -1063,7 +1058,7 @@ execute if score #user memory_shadow_realize matches 121 run bossbar remove memo
 
 > 注意 `realize` 的 BOSS Bar `max` 只有 120，但该模块实际运行到 300 tick——**进度条会先走满再消失**，作为「时限提示」。
 
-### 22. 二阶段的时间轴与难度差异
+### 21. 二阶段的时间轴与难度差异
 
 `boss_extra/tick.mcfunction` 约 252 行、7100 tick。与一阶段的主要差异：
 
@@ -1077,7 +1072,7 @@ execute if score #user memory_shadow_realize matches 121 run bossbar remove memo
 | 踩塔 | 4 塔 | **8 塔**（songplus） |
 | 钢铁/月环 | 120 tick | 120 + **80(fast)** + 延迟版 |
 | 大地图机制 | 无 | **`memory_shadow` 三运** |
-| 触发方式 | 命令方块按钮 | **NPC 对话** |
+| 触发方式 | 命令方块按钮 | 独立数据包，由主地图调度 |
 
 BOSS 前期被 `tp` 到空中并附上发光效果：
 
@@ -1095,7 +1090,7 @@ execute as @e[tag=memory_forget_near.armor_stand] at @s if entity @a[distance=..
 execute if score #user tidedcore_fight matches 460 run kill @e[tag=memory_forget_near.armor_stand]
 ```
 
-### 23. 二阶段的收尾清理
+### 22. 二阶段的收尾清理
 
 `boss_fight_end.mcfunction` 除了清理主计分板，还必须**逐个调用新增技能的 `end`**——因为一阶段的 `boss_fight_end` 不认识它们：
 
@@ -1133,7 +1128,7 @@ kill @e[tag=delay_memory_forget_far.armor_stand]
 1. **抽出配置层**：把判定区域、读条长度、伤害等级集中为一组计分板常量，减少硬编码
 2. **取消 `lib` 重复副本**：二阶段的 `boss_extra/lib/circle/` 与一阶段内容一致，可直接复用 `boss/lib/circle/`，省下一半体积
 3. **增加更多技能**：按 `init/tick/check/end` 四段式新写目录，并在对应 `tick.mcfunction` 注册即可——架构本身已为扩展做好准备
-4. **多难度模式**：用计分板切换「普通 / 零式 / 绝」，对应不同的读条长度与伤害等级
+4. **多难度模式**：用计分板切换「普通 / 零式」，对应不同的读条长度与伤害等级
 5. **多人角色分工**：当前已用 `@r` 与标签分配角色，可扩展到 FF14 式的 T/N/DPS 分工
 
 ---
@@ -1171,3 +1166,34 @@ execute positioned ~0.17365 ~ ~0.98481 facing ~-0.17365 ~ ~-0.98481 run function
 
 - 技能设计参考《最终幻想 XIV》高难副本机制，为 Minecraft 平台上的二次创作
 - 使用纯数据包实现，无第三方 Mod 依赖
+
+### 特别感谢
+
+- 协作 Mapper（开发&测试&文案编写）：YuukiRiko，一位超级可爱且不断支持并给予鼓励给我的人。
+- 部分技能实现方法与FF14dalao（UZQueenO、DreamTY、Too1s）的建议与协助。
+- 参与首次测试的群友们（CastorVow、Starry_Mika、-Epic_S-、Yuan_Ye）。
+
+---
+
+## 更新记录
+
+### V1.1
+
+**二阶段 · 三运（记忆幻影）修复与改进**
+
+- **动态皮肤**：`phantom` 的 4 个幻影不再硬编码 4 位固定玩家的头颅皮肤。现在改为**召唤时留空 profile、在 300 tick 分配角色后回填被选中玩家的 UUID**，使得任意玩家被选中都能正确显示自己的头像，也支持非 4 人阵容。
+  - 涉及文件：`boss_extra/skill/memory_shadow/phantom/tick.mcfunction`
+- 修复零式难度中，三运流程中的若干 bug。
+
+### V1.0
+
+- 首个公开版本：一阶段「潮汐核心」BOSS 战 + 二阶段「零式」难度。
+
+---
+
+## 关于本项目
+
+- README.md 由 dsh 生成，部分内容可能有误，请见谅
+- PR 大欢迎！欢迎修正存在 bug 的内容！
+- 数据包需配合地图使用，单独放入其他存档无法运行
+- 文案依赖资源包语言文件（所有文本均为 `{"translate":"..."}` 键）

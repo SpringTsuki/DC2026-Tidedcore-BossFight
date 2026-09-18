@@ -149,7 +149,7 @@ scoreboard players set #user bossfight_tidedcore 1
 | --- | --- | --- | --- |
 | 记忆遗忘之念 · 远/近 | Memory Forget **Delay** · Far/Near | **延迟咏唱** | 记住圈的落点，判定被推迟到数十秒后 |
 | 记忆遗忘 · 远/近（快速） | Memory Forget **Fast** · Far/Near | **快速咏唱** | 读条压缩到 80 tick，反应时间大幅缩短 |
-| 记忆洪流 · 终末歌 | Memory Torrent · **EndSong** | **8 塔踩塔** | 8 座塔缺一不可，16 种随机布局 |
+| 记忆洪流 · 终末歌 | Memory Torrent · **EndSong** | **随机踩塔** | 8 座备选塔随机出 4 座，16 种布局 |
 | 记忆模仿 · 记忆投影 | Memory Shadow · **Phantom** | **记忆** | 记住 4 个幻影出现的位置 |
 | 记忆模仿 · 记忆复制 | Memory Shadow · **Copy** | **记录** | 系统记录你站在哪个幻影旁 |
 | 记忆模仿 · 记忆粘贴 | Memory Shadow · **Paste** | **重现** | 圈出现在你/队友身上，按记忆站位 |
@@ -204,7 +204,7 @@ scoreboard players add #user tidedcore_fight 1
 | 580 | 钢铁 / 月环（延迟版，420t 后接第二段） |
 | 800 | 第一次地火 |
 | 1050 | 第一次分摊 / 分散 |
-| 1300 | 第一次踩塔（**8 塔加强版**） |
+| 1300 | 第一次踩塔（**随机塔位加强版**） |
 | 1500 | 第二次地火 |
 | 2140 ~ 2395 | 第一次运动会（挡枪 ×4 + 快速钢铁月环 ×2） |
 | 2600 | 永恒冻结（进入 P2） |
@@ -847,7 +847,7 @@ execute if score #user fast_memory_forget_far matches 81 run function .../fast_m
 
 ### 19. 加强踩塔（memory_torrent_songplus）
 
-**机制**：一阶段踩塔是正点或斜点的两组 **4 座塔**（A~D），加强版为场地内 **8 座塔无规律随机出现 4座（A~H）** 。
+**机制**：一阶段踩塔是正点或斜点的两组 **4 座塔**（A-D），加强版为场地内 **8 座塔无规律随机出现 4座（A-H）** 。
 
 `init.mcfunction` 里注册了 8 个计分板：
 
@@ -857,7 +857,14 @@ scoreboard objectives add memory_torrent_song_tower_A trigger
 scoreboard objectives add memory_torrent_song_tower_H trigger
 ```
 
-**塔位由 4 次独立随机决定**，每次随机在「正点组(3/4/1/2)」与「斜点组(7/8/5/6)」之间二选一：
+**塔位由 4 次独立随机决定**，每次随机在「正点」与「斜点」之间二选一——即每个随机数决定**一座**塔：
+
+| 随机轮次 | 随机数 1（正点） | 随机数 2（斜点） |
+| --- | --- | --- |
+| 第 1 轮 | `spawn_tower_3`（`0 60 -8`） | `spawn_tower_7`（`6 60 -6`） |
+| 第 2 轮 | `spawn_tower_4`（`8 60 0`） | `spawn_tower_8`（`6 60 6`） |
+| 第 3 轮 | `spawn_tower_1`（`0 60 8`） | `spawn_tower_5`（`-6 60 6`） |
+| 第 4 轮 | `spawn_tower_2`（`-8 60 0`） | `spawn_tower_6`（`-6 60 -6`） |
 
 ```mcfunction
 function tide_redemption:boss_extra/boss_random_2
@@ -870,9 +877,24 @@ execute if score #user tidedcore_random matches 2 run function .../tower/spawn_t
 ... (共 4 轮)
 ```
 
-> 这是**复用同一套箱子随机方案的典型例子**：`boss_random_2` 与一阶段的 `boss_random` 内容一致，连续调用 4 次即得到 4 个独立 50/50 结果，组合出 2⁴ = **16 种塔位布局**。
+> 这是**复用同一套箱子随机方案的典型例子**：`boss_random_2` 与一阶段的 `boss_random` 内容一致，连续调用 4 次即得到 4 个独立 50/50 结果，组合出 2⁴ = **16 种布局**。
+>
+> **注意：每轮只生成一座塔**，所以场上**始终只有 4 座塔**（正点或斜点各占若干），而非 8 座。8 个 `spawn_tower_*` 是**备选池**，每局从中随机抽 4 个。
 
-**判定逻辑与一阶段同构，只是扩展到 8 座**——每塔内有人则给予踩塔玩家较低的伤害，任一塔为空则全场致死：
+**8 座塔的坐标与标签对应关系**：
+
+| 文件 | 坐标 | 标签 | 方位 |
+| --- | --- | --- | --- |
+| `spawn_tower_1` | `0 60 8` | `torrent_song_A` | 正点 |
+| `spawn_tower_2` | `-8 60 0` | `torrent_song_B` | 正点 |
+| `spawn_tower_3` | `0 60 -8` | `torrent_song_C` | 正点 |
+| `spawn_tower_4` | `8 60 0` | `torrent_song_D` | 正点 |
+| `spawn_tower_5` | `-6 60 6` | `torrent_song_E` | 斜点 |
+| `spawn_tower_6` | `-6 60 -6` | `torrent_song_F` | 斜点 |
+| `spawn_tower_7` | `6 60 -6` | `torrent_song_G` | 斜点 |
+| `spawn_tower_8` | `6 60 6` | `torrent_song_H` | 斜点 |
+
+**判定逻辑覆盖全部 8 座备选塔**——每塔内有人则给予踩塔玩家较低的伤害，任一**已生成的**塔为空则全场致死：
 
 ```mcfunction
 execute store result score #player_number memory_torrent_song_tower_A run execute as @e[tag=torrent_song_A] at @s if entity @a[distance=..2]
@@ -880,6 +902,26 @@ execute store result score #player_number memory_torrent_song_tower_A run execut
 # 如果其中一塔内无人则全员受到致死级伤害
 execute as @e[tag=torrent_song_A] at @s unless score #player_number memory_torrent_song_tower_A matches 1.. run effect give @a[distance=..30] minecraft:instant_damage 1 5
 ```
+
+> 💡 **为什么「未生成的塔」不会误触发团灭？**
+>
+> 关键在于这两行都以 `as @e[tag=torrent_song_A]` 开头——**如果本局没有生成 A 塔，这个选择器选不到任何实体，整条指令就什么也不做**。因此「空塔即团灭」只会对**实际存在**的 4 座塔生效。
+>
+> 这是一个很好的数据包惯用法：**把「实体是否存在」和「实体是否满足条件」合并到同一条 `as @e[...]` 里**，省掉了额外的存在性判断。
+
+**每个塔锚点带三个标签**（`spawn_tower_N`）：
+
+```mcfunction
+summon armor_stand 0 60 -8 {Tags:[torrent_song_C,torrent_song,torrent_song_tower],Invisible:true}
+summon armor_stand 0 68 -8 {Tags:[torrent_song_note,torrent_song],Invisible:true}
+```
+
+| 标签 | 作用 |
+| --- | --- |
+| `torrent_song_A`~`_H` | 个体标识，用于**单独判定**该塔内人数 |
+| `torrent_song_tower` | 群体标识，用于**批量旋转** |
+| `torrent_song` | 总标识 |
+| `torrent_song_note` | 音符锚点（塔上方 8 格，`y=68`） |
 
 踩塔特效含**旋转与音符下落**（`tick.mcfunction`）：
 
@@ -1069,7 +1111,7 @@ execute if score #user memory_shadow_realize matches 121 run bossbar remove memo
 | 开场血量增长 | `+3`/tick，1~359 | `+5`/tick，1~224 |
 | 存活检测区域 | `dx=22,dz=22` | **`dx=25,dz=25`**（场地略大） |
 | BOSS 待机位置 | 地面 `0 60 0` | 前期**空中 `0 73 0`** + `glowing` |
-| 踩塔 | 4 塔 | **8 塔**（songplus） |
+| 踩塔 | 4 塔（固定方位） | **4 塔（从 8 座备选中随机）** |
 | 钢铁/月环 | 120 tick | 120 + **80(fast)** + 延迟版 |
 | 大地图机制 | 无 | **`memory_shadow` 三运** |
 | 触发方式 | 命令方块按钮 | 独立数据包，由主地图调度 |

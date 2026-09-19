@@ -86,11 +86,11 @@ execute if score #user tidedcore_fight matches 400 run tellraw @a {"translate":"
 execute if score #user tidedcore_fight matches 280 run summon armor_stand 0 60 0 {NoGravity:true,Invisible:true,Tags:[memory_forget_near.armor_stand]}
 
 # 动画控制
-execute as @e[tag=memory_forget_near.armor_stand] at @s if score #user tidedcore_fight matches 280 run function tide_redemption:boss_extra/lib/circle/orange/4.5
-execute as @e[tag=memory_forget_near.armor_stand] at @s if score #user tidedcore_fight matches 300 run function tide_redemption:boss_extra/lib/circle/orange/5.0
-execute as @e[tag=memory_forget_near.armor_stand] at @s if score #user tidedcore_fight matches 320 run function tide_redemption:boss_extra/lib/circle/orange/5.5
-execute as @e[tag=memory_forget_near.armor_stand] at @s if score #user tidedcore_fight matches 340 run function tide_redemption:boss_extra/lib/circle/orange/6.0
-execute as @e[tag=memory_forget_near.armor_stand] at @s if score #user tidedcore_fight matches 360 run function tide_redemption:boss_extra/lib/circle/orange/6.5
+execute as @e[tag=memory_forget_near.armor_stand] at @s if score #user tidedcore_fight matches 260 run function tide_redemption:boss_extra/lib/circle/orange/4.5
+execute as @e[tag=memory_forget_near.armor_stand] at @s if score #user tidedcore_fight matches 280 run function tide_redemption:boss_extra/lib/circle/orange/5.0
+execute as @e[tag=memory_forget_near.armor_stand] at @s if score #user tidedcore_fight matches 300 run function tide_redemption:boss_extra/lib/circle/orange/5.5
+execute as @e[tag=memory_forget_near.armor_stand] at @s if score #user tidedcore_fight matches 320 run function tide_redemption:boss_extra/lib/circle/orange/6.0
+execute as @e[tag=memory_forget_near.armor_stand] at @s if score #user tidedcore_fight matches 340 run function tide_redemption:boss_extra/lib/circle/orange/6.5
 execute as @e[tag=memory_forget_near.armor_stand] at @s if score #user tidedcore_fight matches 360 run function tide_redemption:boss_extra/lib/circle/orange/7.0
 execute as @e[tag=memory_forget_near.armor_stand] at @s if score #user tidedcore_fight matches 380 run function tide_redemption:boss_extra/lib/circle/orange/7.5
 execute as @e[tag=memory_forget_near.armor_stand] at @s if score #user tidedcore_fight matches 400 run function tide_redemption:boss_extra/lib/circle/orange/8.0
@@ -125,7 +125,7 @@ execute if score #user tidedcore_fight matches 1050 run function tide_redemption
 execute if score #user tidedcore_fight matches 1050 if score #user tidedcore_random matches 1 run function tide_redemption:boss/skill/memory_cut_shard/init
 execute if score #user tidedcore_fight matches 1050 if score #user tidedcore_random matches 1 run schedule function tide_redemption:boss/skill/memory_cut_module/init 700t
 execute if score #user tidedcore_fight matches 1050 if score #user tidedcore_random matches 2 run function tide_redemption:boss/skill/memory_cut_module/init
-execute if score #user tidedcore_fight matches 1050 if score #user tidedcore_random matches 2 run schedule function tide_redemption:boss/skill/memory_cut_module/init 700t
+execute if score #user tidedcore_fight matches 1050 if score #user tidedcore_random matches 2 run schedule function tide_redemption:boss/skill/memory_cut_shard/init 700t
 
 # 执行储存判定
 execute as @e[tag=delay_memory_forget_far.armor_stand] at @s if score #user tidedcore_fight matches 1170 run function tide_redemption:boss_extra/skill/delay_memory_forget_far/image_orange

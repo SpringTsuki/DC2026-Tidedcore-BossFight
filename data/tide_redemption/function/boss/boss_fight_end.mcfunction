@@ -1,3 +1,6 @@
+# 清除尚未执行的延迟技能，防止战斗结束后重新创建技能状态
+function tide_redemption:boss/lib/clear_schedules
+
 tp @e[tag=tidedcore] ~ -255 ~
 
 function tide_redemption:boss/skill/boss_spawn/end

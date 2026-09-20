@@ -1,3 +1,6 @@
+# 清除尚未执行的延迟技能，防止战斗结束后重新创建技能状态
+function tide_redemption:boss/lib/clear_schedules
+
 tp @e[tag=tidedcore] ~ -255 ~
 
 function tide_redemption:boss_extra/skill/boss_spawn/end
@@ -23,6 +26,17 @@ function tide_redemption:boss_extra/skill/fast_memory_forget_far/end
 function tide_redemption:boss_extra/skill/fast_memory_forget_near/end
 function tide_redemption:boss_extra/skill/memory_torrent_songplus/end
 function tide_redemption:boss_extra/skill/memory_shadow/end
+
+# 清理零式复用的一阶段技能
+function tide_redemption:boss/skill/memory_cut_module/end
+function tide_redemption:boss/skill/memory_cut_shard/end
+function tide_redemption:boss/skill/memory_forever_delete/end
+function tide_redemption:boss/skill/memory_forever_frozen/end
+function tide_redemption:boss/skill/memory_forget_far/end
+function tide_redemption:boss/skill/memory_forget_near/end
+function tide_redemption:boss/skill/memory_torrent_bleeding/end
+function tide_redemption:boss/skill/memory_torrent_dataline/end
+function tide_redemption:boss/skill/memory_torrent_song/end
 
 # 延迟咏唱假人移除
 kill @e[tag=delay_memory_forget_near.armor_stand]

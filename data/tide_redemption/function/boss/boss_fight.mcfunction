@@ -1,4 +1,7 @@
 stopsound @a
+
+# 清除异常中断的上一场战斗可能留下的延迟技能
+function tide_redemption:boss/lib/clear_schedules
 # 增加检查函数
 scoreboard objectives add bossfight_tidedcore trigger
 scoreboard players set #user bossfight_tidedcore 1

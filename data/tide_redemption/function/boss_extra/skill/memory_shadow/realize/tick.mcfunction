@@ -9,13 +9,13 @@ execute as @e[tag=memory_shadow_dust] at @s positioned ^ ^0.0625 ^2 if score #us
 
 # 创建假人3、1
 # 动画
-execute if score #user memory_shadow_realize matches 1 run summon armor_stand 937 147 2023 {Tags:[memory_shadow_dust,memory_shadow_a],Invisible:true,NoGravity:true}
-execute if score #user memory_shadow_realize matches 1 run summon armor_stand 937 147 2039 {Tags:[memory_shadow_dust,memory_shadow_b],Invisible:true,NoGravity:true}
+execute if score #user memory_shadow_realize matches 1 run summon armor_stand 0 60 -8 {Tags:[memory_shadow_dust,memory_shadow_a],Invisible:true,NoGravity:true}
+execute if score #user memory_shadow_realize matches 1 run summon armor_stand 0 60 8 {Tags:[memory_shadow_dust,memory_shadow_b],Invisible:true,NoGravity:true}
 
 # 创建假人2、4
 # 动画
-execute if score #user memory_shadow_realize matches 60 run summon armor_stand 929 147 2031 {Tags:[memory_shadow_dust,memory_shadow_c],Invisible:true,NoGravity:true}
-execute if score #user memory_shadow_realize matches 60 run summon armor_stand 945 147 2031 {Tags:[memory_shadow_dust,memory_shadow_d],Invisible:true,NoGravity:true}
+execute if score #user memory_shadow_realize matches 60 run summon armor_stand -8 60 0 {Tags:[memory_shadow_dust,memory_shadow_c],Invisible:true,NoGravity:true}
+execute if score #user memory_shadow_realize matches 60 run summon armor_stand 8 60 0 {Tags:[memory_shadow_dust,memory_shadow_d],Invisible:true,NoGravity:true}
 
 # 假人判断玩家身上所遭受过的技能 技能初始化时直接判断
 # Tag = memory_shadow_a

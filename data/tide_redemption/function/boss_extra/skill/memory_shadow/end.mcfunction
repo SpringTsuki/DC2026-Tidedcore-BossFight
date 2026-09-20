@@ -1,6 +1,7 @@
 function tide_redemption:boss_extra/skill/memory_shadow/phantom/end
 function tide_redemption:boss_extra/skill/memory_shadow/copy/end
 function tide_redemption:boss_extra/skill/memory_shadow/paste/end
+function tide_redemption:boss_extra/skill/memory_shadow/realize/end
 
 scoreboard objectives remove memory_shadow_timeline
 

@@ -1,5 +1,4 @@
 function tide_redemption:boss/boss_tp_ground
-function tide_redemption:boss/skill/memory_torrent_dataline/miniboss/miniboss_spawn
 
 # 添加BOSS BAR
 bossbar add minecraft:memory_torrent_dataline {"color":"yellow","text":"「记忆洪流 · 数据流」| 「Memory Torrent · Dataline」"}

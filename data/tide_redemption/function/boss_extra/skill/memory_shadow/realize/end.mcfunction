@@ -1,1 +1,2 @@
 scoreboard objectives remove memory_shadow_realize
+bossbar remove minecraft:memory_shadow_realize

@@ -1,9 +1,11 @@
 # DC2026 - Tidedcore BossFight
 
-> 一个用**纯数据包**（无 Mod / 无插件依赖）在 Minecraft Java 版中复刻 **FF14 式高难副本 BOSS 战** 的项目。
-> 最终 BOSS「潮汐核心 / Tided Core」拥有完整的**读条时间轴、机制组合随机、运动会、狂暴与锁血**流程。
+> 一个用**纯数据包**在 Minecraft Java 版中实现 **FF14 式多人高难 BOSS 战**的项目。
+> 最终 BOSS「潮汐核心 / Tided Core」拥有完整的**读条时间轴、机制组合、运动会、转阶段、锁血与狂暴**流程。
 >
 > 圆形粒子特效基于第三方库 [KunoSayo/BattleLibrary](https://github.com/KunoSayo/BattleLibrary)，详见 [许可与致谢](#许可与致谢)。
+
+这份 README 同时面向想游玩项目的人和想阅读源码的开发者。前半部分介绍部署、技能与战斗流程；从[技能实现原理](#技能实现原理)开始，按源码结构解释计分板状态机、技能生命周期、空间判定、随机分支、粒子打表、两套时间轴和收尾策略。
 
 ---
 
@@ -12,16 +14,17 @@
 - [DC2026 - Tidedcore BossFight](#dc2026---tidedcore-bossfight)
   - [目录](#目录)
   - [项目简介](#项目简介)
+  - [设计理解](#设计理解)
   - [环境要求](#环境要求)
   - [安装与部署](#安装与部署)
   - [如何开始 BOSS 战](#如何开始-boss-战)
   - [技能一览](#技能一览)
   - [战斗流程](#战斗流程)
-  - [目录结构](#目录结构)
+  - [目录结构](Bossbar#目录结构)
   - [技能实现原理](#技能实现原理)
     - [1. 整体架构：tick 驱动的状态机](#1-整体架构tick-驱动的状态机)
     - [2. 四段式生命周期：init / tick / check / end](#2-四段式生命周期init--tick--check--end)
-    - [3. 计时器与读条 BOSS Bar](#3-计时器与读条-boss-bar)
+    - [3. 计时器与读条 Bossbar](#3-计时器与读条-bossbar)
     - [4. 时间轴调度与技能组合随机](#4-时间轴调度与技能组合随机)
     - [5. 范围判定：以盔甲架为判定锚点](#5-范围判定以盔甲架为判定锚点)
     - [6. 伤害分级系统](#6-伤害分级系统)
@@ -63,12 +66,20 @@
 | 零客户端 Mod | 完全基于原版数据包（`pack_format 48`，Minecraft 1.21.x） |
 | 精确的机制时序 | 计分板 `trigger` 目标充当逐帧计时器 |
 | 可组合的机制 | 每个技能是独立的 `init/tick/check/end` 模块 |
-| 随机化流程 | 掉落表 + 箱子探测实现真随机分支 |
+| 随机化流程 | 掉落表 + 箱子探测实现等权随机分支 |
 | 视觉引导 | 盔甲架 + `dust` 粒子绘制预警圈 |
+
+## 设计理解
+
+从实现上看，这个项目真正的 BOSS 并不只是场中央那只高血量僵尸，而是由计分板驱动的一整条战斗时间轴。僵尸承担血量、位置和演出的实体载体；技能的出现顺序、读条、判定、阶段转换与失败条件，则由 `boss/tick.mcfunction` 和 `boss_extra/tick.mcfunction` 组织成确定的状态机。
+
+技能名中的「记忆」也不只是包装。普通难度先建立分摊、分散、钢铁、月环、挡枪、地火与踩塔这套机制词汇；零式再通过延迟咏唱、快速咏唱和「投影 → 复制 → 粘贴 → 重现」，要求玩家记住先前展示的信息，并在之后重新解释它。难度提升主要来自信息被延迟、重排和组合，而不只是伤害数值增加。
+
+代码结构也服务于这种设计：主时间轴只决定“何时启动什么”，各技能目录负责自己的读条、动画、结算与回收。大量重复的命令并非都在做相同的事；其中一部分是在原版命令系统缺少循环、参数化函数和几何绘制能力的条件下，把演出与判定逐帧展开。理解这一点后，整个仓库会比文件数量看起来更有秩序。
 
 ## 环境要求
 
-- **Minecraft Java Edition 1.21+**（`pack_format: 48`）
+- **Minecraft Java Edition 1.21.x**（`pack_format: 48`）
 - 单人存档或服务端均可，**无需安装任何 Mod**
 - 建议 **4 名及以上玩家**：BOSS 战最少需要 4 人才可成功击破
 - 在一块固定的场地完成战斗（判定区域为 `x=-11,y=60,z=-11` 起、`dx=22,dy=7,dz=22` 的立方体范围）
@@ -97,7 +108,7 @@
    /datapack list
    ```
 
-> **提示**：本仓库包含数据包，地图与资源包。原生地图已经包含了一份数据包。若需自研，直接 git clone 本项目即可。
+> **提示**：本仓库保存的是数据包源码，不含完整地图与资源包。场地坐标、入口方块、翻译键和自定义 BGM 都与原项目的地图、资源包配套；单独把本仓库放进任意存档，无法得到完整的游玩成品。若要阅读或维护战斗逻辑，直接 clone 本仓库即可。
 >
 > 所有 `tellraw` / `title` / `CustomName` 的文本都使用 `{"translate":"..."}` 键，**实际文案在资源包的语言文件中**——因此更换语言文件即可实现多语言，修改文案也无需改动逻辑代码。
 
@@ -173,7 +184,7 @@ scoreboard players add #user tidedcore_fight 1
 | 1 | 生成特效命令方块，BOSS 血量开始增长（开场演出） |
 | 180 | 天气转为雷暴 |
 | 359 | **生成 BOSS**（僵尸，1024 血，全套下界合金） |
-| 360 | 召唤雷电，BOSS Bar 转红，血量与实体同步 |
+| 360 | 召唤雷电，Bossbar 转红，血量与实体同步 |
 | 640 | 第一次地火 |
 | 1230 | 第一次分摊 |
 | 1540 | 第一次踩塔 |
@@ -244,7 +255,7 @@ DC2026-Tidedcore-BossFight/
         │       ├── boss_random_2.mcfunction     # 随机数（同一套箱子方案）
         │       ├── boss_tp / boss_tp_sky        # 场地内 / 空中待机      
         │       ├── skill/      # 新技能 + 一阶段技能复用
-        │       └── lib/        # 同 lib 副本（独立命名空间）
+        │       └── lib/        # 零式使用的粒子与图像函数副本
         └── loot_table/boss/boss_random.json  # 随机分支用的战利品表
 ```
 
@@ -295,10 +306,10 @@ execute if score #user bossfight_extra_tidedcore matches 1 run return 0
 
 | 文件 | 职责 |
 | --- | --- |
-| `init.mcfunction` | 创建计分板目标、建立 BOSS Bar、生成判定用盔甲架、分配玩家标签 |
+| `init.mcfunction` | 创建计分板目标、建立 Bossbar、生成判定用盔甲架、分配玩家标签 |
 | `tick.mcfunction` | 每帧推进计时器、驱动动画、在特定帧调用 `check` 与 `end` |
 | `check.mcfunction` | **只在结算帧执行一次**的伤害判定 |
-| `end.mcfunction` | 移除计分板、BOSS Bar、标签与实体，清理现场 |
+| `end.mcfunction` | 移除计分板、Bossbar、标签与实体，清理现场 |
 
 以「记忆遗忘 · 近」为例（`skill/memory_forget_near/`）：
 
@@ -345,7 +356,7 @@ kill @e[tag=memory_forget_near.armor_stand]
 
 这套「读条 → 结算 → 清理」的结构在 9 个技能中重复出现，是本项目最核心的工程模式。
 
-### 3. 计时器与读条 BOSS Bar
+### 3. 计时器与读条 Bossbar
 
 计时器借用了计分板的 `trigger` 类型（本意是给玩家触发用的类型，这里当作**纯数值容器**）：
 
@@ -354,9 +365,9 @@ scoreboard players add #user memory_forget_near 1
 execute store result bossbar minecraft:memory_forget_near value run scoreboard players get #user memory_forget_near
 ```
 
-`execute store result bossbar ... value` 把计分板数值写进 BOSS Bar 的进度条，于是**读条长度 = 技能持续时间**，玩家能直观看到还有多久结算。
+`execute store result bossbar ... value` 把计分板数值写进 Bossbar 的进度条，于是**读条长度 = 技能持续时间**，玩家能直观看到还有多久结算。
 
-各技能的读条长度（BOSS Bar `max`）：
+各技能的读条长度（Bossbar `max`）：
 
 | 技能 | 读条长度（tick） | 结算帧 | 判定方式 |
 | --- | --- | --- | --- |
@@ -581,14 +592,22 @@ execute as @e[tag=memory_torrent_bleeding.armor_boss] at @s if entity @a[sort=ne
 
 ### 12. 地火 / 数据流（Dataline）
 
-`memory_torrent_dataline` —— 最复杂的技能，包含一个迷你 BOSS 与多段地面 AOE：
+`memory_torrent_dataline` —— 普通难度中时间轴最长的单体技能模块，包含一组迷你 BOSS 判定锚点与多段地面 AOE。`init` 先让 BOSS 归位，并建立 Bossbar、主计时器和子时间轴；实体阵列在技能真正开始运行的第 1 tick 才生成：
 
 ```mcfunction
+# init.mcfunction
 function tide_redemption:boss/boss_tp_ground
-function tide_redemption:boss/skill/memory_torrent_dataline/miniboss/miniboss_spawn
+
+bossbar add minecraft:memory_torrent_dataline {"color":"yellow","text":"「记忆洪流 · 数据流」| 「Memory Torrent · Dataline」"}
+scoreboard objectives add memory_torrent_dataline trigger
+scoreboard objectives add memory_torrent_dataline.timeline trigger
+
+# tick.mcfunction
+execute if score #user memory_torrent_dataline.timeline matches 1 run function tide_redemption:boss/skill/memory_torrent_dataline/miniboss/miniboss_spawn
+execute if score #user memory_torrent_dataline.timeline matches 1 run function tide_redemption:boss/skill/memory_torrent_dataline/miniboss/aoe_orange
 ```
 
-它使用了**双计时器**：`memory_torrent_dataline` 与 `memory_torrent_dataline.timeline` 分别跟踪主流程与子阶段，配合 `miniboss/aoe_orange.mcfunction` / `aoe_red.mcfunction` 做多轮预警与判定。
+它使用了**双计时器**：`memory_torrent_dataline` 驱动 160 tick 的玩家可见读条，`memory_torrent_dataline.timeline` 则继续推进完整的 500 tick 技能流程。前 160 tick 反复绘制橙色预警，180 tick 起每 20 tick 移动一次锚点并执行红色范围与伤害判定，最后统一回收实体和状态。把阵列实体的生成放在 tick 1，也让 `init` 保持为状态注册入口，避免仅注册技能时就提前创建场上实体。
 
 ### 13. 粒子绘制：BattleLibrary 的圆环打表
 
@@ -601,7 +620,7 @@ execute positioned ~0.17365 ~ ~0.98481 facing ~-0.17365 ~ ~-0.98481 run function
 execute positioned ~0.34202 ~ ~0.93969 facing ~-0.34202 ~ ~-0.93969 run function tide_redemption:boss/lib/dust/dust_red
 ```
 
-**原理**：原版粒子指令一次只能在一个点生成粒子，所以要在游戏里画出平滑的圆，必须**按角度采样**——BattleLibrary 用 Rust 程序（仓库内含 `Cargo.toml` 与 `src/`）预先算好圆周上每一点的坐标与朝向，把结果**打表**生成 `.mcfunction`。本项目复用了这份坐标表，只把结尾的回调 `battleapi:circle_cb` 换成了自己的粒子函数。
+**原理**：原版粒子指令一次只能在一个点生成粒子，所以要在游戏里画出平滑的圆，必须**按角度采样**——BattleLibrary 上游仓库中的 Rust 生成器预先算好圆周上每一点的坐标与朝向，把结果**打表**生成 `.mcfunction`。本项目复用了这份坐标表，只把结尾的回调 `battleapi:circle_cb` 换成了自己的粒子函数。
 
 > 可以注意到 `0.17365`、`0.34202` 等数值正是 `sin/cos` 在 10° 间隔上的取值，证实是等角度采样生成的。
 
@@ -642,7 +661,7 @@ summon minecraft:zombie 0 60 0 {Tags:[tidedcore],Health:1024f,attributes:[{id:"m
 - `ArmorDropChances:[0f,0f,0f,0f]` —— **护甲掉落率为 0**，防止玩家捡装备
 - `CustomName` 用 `translate` 做**本地化名称**
 
-**血量同步**（实体 → 计分板 → BOSS Bar）：
+**血量同步**（实体 → 计分板 → Bossbar）：
 
 ```mcfunction
 execute if score #user tidedcore_fight matches 360.. run execute as @e[tag=tidedcore] at @s store result score #tidedcore tidedcore_hp run data get entity @s Health
@@ -720,6 +739,9 @@ execute if score #user bgm_boss_tidedcore matches 380 run title @a subtitle {"tr
 战斗结束后调用 `boss_fight_end.mcfunction` 做完整重置：
 
 ```mcfunction
+# 先取消尚未触发的组合技
+function tide_redemption:boss/lib/clear_schedules
+
 tp @e[tag=tidedcore] ~ -255 ~          # BOSS 传送到虚空（移除）
 
 function tide_redemption:boss/skill/boss_spawn/end
@@ -742,6 +764,7 @@ scoreboard players set #user bossfight_tidedcore 0
 要点：
 
 - **用 `tp ~ -255 ~` 移除 BOSS 而不是 `kill`**——避免触发死亡动画与掉落，也避免 `boss_success` 被误触发
+- 开战前与总收尾都调用 `clear_schedules`，取消钢铁/月环、分摊/分散及零式快速/延迟咏唱的待执行调度，防止上一局的技能在下一局启动
 - 用 `clone` 恢复入口方块，实现场地的**状态还原**
 - 逐个 `scoreboard objectives remove` 清理计分板
 - 最后把 `bossfight_tidedcore` 置 0，**允许重新开战**
@@ -984,7 +1007,7 @@ execute unless entity @a[tag=memory_shadow_a] if score #user memory_shadow_phant
 execute unless entity @a[tag=memory_shadow_b] if score #user memory_shadow_phantom matches 300 run tag @r[tag=!memory_shadow_a,x=-11,y=60,z=-11,dx=22,dy=7,dz=22] add memory_shadow_b
 ```
 
-> 注意 `unless entity @a[tag=memory_shadow_a]` 这个前置判断——**只有当该角色还没被分配时**才随机选人。这样允许多个玩家共同完成（而非强制 4 人），同时保证不重复。被注释掉的 `name=SpringAurora` 版本说明作者曾考虑**固定玩家对应固定幻影**。
+> 注意 `unless entity @a[tag=memory_shadow_a]` 这个前置判断——**只有当该角色还没被分配时**才随机选人；后续选择器再逐层排除 a、b、c，保证同一名玩家不会拿到两个角色。完整机制仍按 4 名玩家设计；人数不足时，未分配角色的后续命令不会找到目标。被注释掉的 `name=SpringAurora` 版本说明作者曾考虑**固定玩家对应固定幻影**。
 
 ##### 动态皮肤：让幻影顶着「被选中玩家」的头
 
@@ -1022,8 +1045,8 @@ execute if score #user memory_shadow_phantom matches 300 as @a[tag=memory_shadow
 **这个设计的好处**：
 
 - **不再硬编码 4 位固定玩家的名字**——谁被选中，幻影就显示谁
-- **支持任意人数**（≥1 人都能玩），跟 `unless entity` 的角色分配逻辑完全自洽
-- **人数不足时也不会出现「空头像」**——因为皮肤总是来自真实被选中的玩家
+- 角色与皮肤都来自当局玩家，换一组测试者也无需修改 NBT
+- UUID 只在角色分配完成后回填，解决了“先生成幻影、后决定归属”的时序问题
 
 > 💡 **可迁移的技巧**：`data modify ... set from entity @s UUID` 是**动态生成玩家头颅**的通用写法。任何需要「显示某个玩家皮肤」的场景（NPC 雕像、击杀播报、队伍标识、幻影分身）都可以用这一招，而不必预先在 NBT 里写死 `profile:<玩家名>`。
 
@@ -1074,7 +1097,7 @@ scoreboard objectives remove memory_shadow_module
 
 **玩法**：最终判定。把之前所有玩家受到的伤害模式（大圈或分摊）记录，并在幻影身上进行**一次性重演**，玩家必须站在正确位置。
 
-`realize/tick.mcfunction` 在 1 和 60 tick 生成 4 个幻影锚点（坐标 `937 147 2023` 等），然后**把 copy 阶段记录的玩家标签转移给幻影**：
+`realize/tick.mcfunction` 在 1 和 60 tick 于场地四边生成 4 个幻影锚点（`0 60 -8`、`0 60 8`、`-8 60 0`、`8 60 0`），然后**把 copy 阶段记录的玩家标签转移给幻影**：
 
 ```mcfunction
 execute as @e[tag=memory_shadow_a,tag=memory_shadow_armor] at @s if entity @a[tag=memory_shadow_a,tag=memory_shadow_cut_1] if score #user memory_shadow_realize matches 5 run tag @s add memory_shadow_cut
@@ -1091,14 +1114,16 @@ execute as @e[tag=memory_shadow_a,tag=memory_shadow_armor,tag=memory_shadow_cut]
 
 `200 tick` 时 `check_module` 做分摊判定，`300 tick` 时调用 `end` 收尾。
 
-**realize 的 BOSS Bar 是动态的**——`max` 设为 120，但用独立函数每 tick 同步，并在 121 tick 主动移除：
+这里的 `realize/check_module.mcfunction` 以 `matches 1..` 为成功条件：幻影旁只要有 1 人就能完成这次分摊。这是「时空重现」本身的机制设计，与 `paste/check_module.mcfunction` 要求 `matches 2..` 的双人分摊不同。
+
+**realize 的 Bossbar 是动态的**——`max` 设为 120，但用独立函数每 tick 同步，并在 121 tick 主动移除：
 
 ```mcfunction
 execute if score #user memory_shadow_realize matches 1..120 run function .../realize/bossbar
 execute if score #user memory_shadow_realize matches 121 run bossbar remove memory_shadow_realize
 ```
 
-> 注意 `realize` 的 BOSS Bar `max` 只有 120，但该模块实际运行到 300 tick——**进度条会先走满再消失**，作为「时限提示」。
+> 注意 `realize` 的 Bossbar `max` 只有 120，但该模块实际运行到 300 tick——**进度条会先走满再消失**，作为「时限提示」。
 
 ### 21. 二阶段的时间轴与难度差异
 
@@ -1114,7 +1139,7 @@ execute if score #user memory_shadow_realize matches 121 run bossbar remove memo
 | 踩塔 | 4 塔（固定方位） | **4 塔（从 8 座备选中随机）** |
 | 钢铁/月环 | 120 tick | 120 + **80(fast)** + 延迟版 |
 | 大地图机制 | 无 | **`memory_shadow` 三运** |
-| 触发方式 | 命令方块按钮 | 独立数据包，由主地图调度 |
+| 触发方式 | 命令方块按钮 | 独立入口，由主地图调度 |
 
 BOSS 前期被 `tp` 到空中并附上发光效果：
 
@@ -1124,7 +1149,7 @@ execute if score #user tidedcore_fight matches 460 run tp @e[tag=tidedcore] 0 60
 execute if score #user tidedcore_fight matches 224..460 run effect give @e[tag=tidedcore] glowing 1
 ```
 
-**这是为了配合开场演出**：BOSS 悬浮在空中（tick 224~459），同时地面用橙色圈逐级扩大到 9 格（`lib/circle/orange/4.5` → `9.0`），到 460 tick 落地并结算一次全屏 AOE：
+**这是为了配合开场演出**：BOSS 悬浮在空中（tick 224~459），同时地面用橙色圈逐级扩大到 9 格（`lib/circle/orange/4.5` → `9.0`），到 460 tick 落地并结算一次范围 AOE：
 
 ```mcfunction
 #伤害判定、九格外安全
@@ -1134,9 +1159,11 @@ execute if score #user tidedcore_fight matches 460 run kill @e[tag=memory_forget
 
 ### 22. 二阶段的收尾清理
 
-`boss_fight_end.mcfunction` 除了清理主计分板，还必须**逐个调用新增技能的 `end`**——因为一阶段的 `boss_fight_end` 不认识它们：
+`boss_fight_end.mcfunction` 除了清理主计分板，还会先取消所有未触发的调度，再逐个调用零式新增技能与复用基础技能的 `end`：
 
 ```mcfunction
+function tide_redemption:boss/lib/clear_schedules
+
 function tide_redemption:boss_extra/skill/delay_memory_forget_far/end
 function tide_redemption:boss_extra/skill/delay_memory_forget_near/end
 function tide_redemption:boss_extra/skill/fast_memory_forget_far/end
@@ -1144,12 +1171,18 @@ function tide_redemption:boss_extra/skill/fast_memory_forget_near/end
 function tide_redemption:boss_extra/skill/memory_torrent_songplus/end
 function tide_redemption:boss_extra/skill/memory_shadow/end
 
+# 零式复用的一阶段技能也由总收尾兜底回收
+function tide_redemption:boss/skill/memory_cut_module/end
+function tide_redemption:boss/skill/memory_cut_shard/end
+function tide_redemption:boss/skill/memory_torrent_dataline/end
+function tide_redemption:boss/skill/memory_forever_delete/end
+
 # 延迟咏唱假人移除
 kill @e[tag=delay_memory_forget_near.armor_stand]
 kill @e[tag=delay_memory_forget_far.armor_stand]
 ```
 
-最后两行是**必要的兜底**：延迟技能的盔甲架是长期驻留的，若战斗在判定前提前结束（例如玩家全灭），`check` 永远不会被调用，锚点就会残留——所以必须在收尾时强制 `kill`。
+最后两行是**必要的兜底**：延迟技能的盔甲架是长期驻留的，若战斗在判定前提前结束（例如玩家全灭），`check` 永远不会被调用，锚点就会残留——所以必须在收尾时强制 `kill`。同理，零式虽然复用 `boss/skill/` 下的大量模块，也不能假定它们都能走到各自的正常结束帧，因此总收尾会显式调用这些基础技能的 `end`。
 
 > 这体现了一个通用原则：**凡是「生命周期跨越多个阶段」的实体，都不能只依赖自己模块的 `end` 清理，必须在主流程的收尾函数里兜底。**
 
@@ -1235,7 +1268,7 @@ execute positioned ~0.17365 ~ ~0.98481 facing ~-0.17365 ~ ~-0.98481 run function
 
 ## 关于本项目
 
-- README.md 由 dsh 生成，部分内容可能有误，请见谅
-- PR 大欢迎！欢迎修正存在 bug 的内容！
+- README.md 初稿由 GPT-5.6 辅助生成，并由作者校对与维护
+- PR & Issue 大欢迎！欢迎修正存在 bug 的内容！
 - 数据包需配合地图使用，单独放入其他存档无法运行
 - 文案依赖资源包语言文件（所有文本均为 `{"translate":"..."}` 键）
